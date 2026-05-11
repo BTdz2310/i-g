@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Transaction {
+  id                String    @id @default(uuid())
+  maGiaodich        String    @unique
+  productKind       String
+  status            TxStatus
+  inboundPayload    Json
+  pviRequest        Json?
+  pviResponse       Json?
+  pviPrKey          String?
+  paymentUrl        String?
+  policyNumber      String?
+  serialNumber      String?
+  pdfUrl            String?
+  callbackPayload   Json?
+  callbackAt        DateTime?
+  callbackCardId    String?
+  callbackCpId      String?
+  reconcileAttempts Int       @default(0)
+  lastError         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([policyNumber])
+}
+
+enum TxStatus {
+  SUBMITTING
+  SUBMITTED_OK
+  SUBMITTED_FAIL
+  ISSUED
+  CALLBACK_TIMEOUT
+}
+
+model ApiCallLog {
+  id         String   @id @default(uuid())
+  direction  String
+  endpoint   String
+  maGiaodich String?
+  request    Json?
+  response   Json?
+  statusCode Int?
+  durationMs Int?
+  errorMsg   String?
+  createdAt  DateTime @default(now())
+
+  @@index([maGiaodich])
+  @@index([createdAt])
+}
