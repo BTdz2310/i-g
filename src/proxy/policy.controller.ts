@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Req, UseGuards } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -8,8 +8,12 @@ import {
 } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { PviClient } from '../pvi/pvi.client';
+import { PartnerAuthGuard } from '../partner-auth/partner-auth.guard';
+import { ApiPartnerAuth } from '../common/decorators/api-partner-auth.decorator';
 
 @ApiTags('order')
+@ApiPartnerAuth()
+@UseGuards(PartnerAuthGuard)
 @Controller('api/pvi/order')
 export class PolicyController {
   constructor(
@@ -56,11 +60,16 @@ export class PolicyController {
     },
   })
   @ApiNotFoundResponse({ description: 'Không tìm thấy giao dịch' })
-  async getPolicy(@Param('maGiaodich') maGiaodich: string) {
+  async getPolicy(
+    @Req() req: Request,
+    @Param('maGiaodich') maGiaodich: string,
+  ) {
+    const partnerId = (req as any).partner?.id as string | undefined;
     const tx = await this.prisma.transaction.findUnique({
       where: { maGiaodich },
     });
-    if (!tx) throw new NotFoundException('Transaction not found');
+    if (!tx || (partnerId && tx.partnerId !== partnerId))
+      throw new NotFoundException('Transaction not found');
 
     // Đã có kết quả → trả từ DB, không gọi PVI
     if (tx.status === 'ISSUED') {

@@ -7,6 +7,9 @@ import { ProxyModule } from './proxy/proxy.module';
 import { CallbackModule } from './callback/callback.module';
 import { ReconcileModule } from './reconcile/reconcile.module';
 import { AdminModule } from './admin/admin.module';
+import { AdminAuthModule } from './admin-auth/admin-auth.module';
+import { TransactionModule } from './transaction/transaction.module';
+import { DevModule } from './dev/dev.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { AdminModule } from './admin/admin.module';
     CallbackModule,
     ReconcileModule,
     AdminModule,
+    AdminAuthModule,
+    TransactionModule,
+    DevModule,
   ],
 })
 export class AppModule {}

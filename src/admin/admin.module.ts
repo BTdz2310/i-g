@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
-import { ReconcileModule } from '../reconcile/reconcile.module';
+import { PartnerAuthModule } from '../partner-auth/partner-auth.module';
+import { AdminAuthModule } from '../admin-auth/admin-auth.module';
 
 @Module({
-  imports: [ReconcileModule],
+  imports: [PartnerAuthModule, AdminAuthModule],
   controllers: [AdminController],
 })
 export class AdminModule {}

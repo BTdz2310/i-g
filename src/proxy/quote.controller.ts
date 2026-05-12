@@ -1,10 +1,14 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PviClient } from '../pvi/pvi.client';
 import { QuoteDto, QuoteResultDto } from './dto/quote.dto';
 import { FeeInput } from '../pvi/dto/fee.dto';
+import { PartnerAuthGuard } from '../partner-auth/partner-auth.guard';
+import { ApiPartnerAuth } from '../common/decorators/api-partner-auth.decorator';
 
 @ApiTags('quote')
+@ApiPartnerAuth()
+@UseGuards(PartnerAuthGuard)
 @Controller('api/pvi/quote')
 export class QuoteController {
   constructor(private readonly pvi: PviClient) {}
@@ -12,10 +16,14 @@ export class QuoteController {
   @Post()
   @ApiOperation({
     summary: 'Tính phí bảo hiểm TNDS',
-    description: 'Tính tổng phí TNDS bắt buộc và lái phụ. Cần lấy ma_loaixe từ /vehicle-type trước.',
+    description:
+      'Tính tổng phí TNDS bắt buộc và lái phụ. Cần lấy ma_loaixe từ /vehicle-type trước.',
   })
   @ApiBody({ type: QuoteDto })
-  @ApiOkResponse({ type: QuoteResultDto, description: 'Phí bảo hiểm — TotalFee tính bằng VND' })
+  @ApiOkResponse({
+    type: QuoteResultDto,
+    description: 'Phí bảo hiểm — TotalFee tính bằng VND',
+  })
   getFee(@Body() body: QuoteDto) {
     const input: FeeInput = {
       ma_trongtai: body.ma_trongtai,

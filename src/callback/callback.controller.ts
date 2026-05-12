@@ -1,5 +1,5 @@
 import { Body, Controller, Logger, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignService } from '../pvi/sign.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -17,6 +17,7 @@ export class CallbackController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Nhận callback từ PVI khi phát hành đơn' })
   async handleCallback(@Body() payload: CallbackPayload) {
     const start = Date.now();
 

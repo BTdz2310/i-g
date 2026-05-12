@@ -28,8 +28,12 @@ model Transaction {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  partnerId         String?
+  partner           Partner?  @relation(fields: [partnerId], references: [id])
+
   @@index([status, createdAt])
   @@index([policyNumber])
+  @@index([partnerId])
 }
 
 enum TxStatus {
@@ -54,4 +58,48 @@ model ApiCallLog {
 
   @@index([maGiaodich])
   @@index([createdAt])
+}
+
+model Partner {
+  id           String          @id @default(uuid())
+  name         String
+  clientId     String          @unique
+  status       PartnerStatus
+  rateLimit    Int             @default(0)
+  allowedIps   String[]        @default([])
+  secrets      PartnerSecret[]
+  transactions Transaction[]
+  createdAt    DateTime        @default(now())
+}
+
+model PartnerSecret {
+  id        String       @id @default(uuid())
+  partnerId String
+  keyId     String
+  secretEnc String
+  status    SecretStatus
+  createdAt DateTime     @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id])
+
+  @@unique([partnerId, keyId])
+  @@index([partnerId])
+  @@index([keyId])
+}
+
+enum PartnerStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum SecretStatus {
+  ACTIVE
+  REVOKED
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
 }

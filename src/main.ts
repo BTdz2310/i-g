@@ -3,29 +3,63 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiReferenceOptions } from '@scalar/nestjs-api-reference';
+import { json, urlencoded } from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { validateEnv } from './config/env';
+import { RawBodyRequest } from './common/types/raw-body';
 
 async function bootstrap() {
-  validateEnv(process.env as Record<string, unknown>);
-  const app = await NestFactory.create(AppModule);
+  validateEnv(process.env);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
 
-  const swaggerConfig = new DocumentBuilder()
+  // Tin tưởng X-Forwarded-* từ reverse proxy (Nginx/ALB) đứng trước app.
+  // Cần thiết để req.ip trả IP thật của client cho IP allowlist của partner.
+  app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+
+  app.use(
+    json({
+      verify: (req, _res, buf) => {
+        (req as RawBodyRequest).rawBody = buf;
+      },
+    }),
+  );
+  app.use(
+    urlencoded({
+      extended: true,
+      verify: (req, _res, buf) => {
+        (req as RawBodyRequest).rawBody = buf;
+      },
+    }),
+  );
+
+  const builder = new DocumentBuilder()
     .setTitle('Insurance Gateway')
-    .setDescription('BFF gateway kết nối PVI Insurance — giấu credential, sign server-side, log giao dịch, nhận callback.')
+    .setDescription(
+      'BFF gateway kết nối PVI Insurance — giấu credential, sign server-side, log giao dịch, nhận callback.',
+    )
     .setVersion('1.0')
     .addTag('catalog', 'Danh mục PVI (loại xe, hãng xe, mục đích sử dụng...)')
     .addTag('quote', 'Tính phí bảo hiểm TNDS')
     .addTag('order', 'Tạo đơn & tra cứu đơn bảo hiểm')
     .addTag('callback', 'Webhook từ PVI khi đơn được cấp')
-    .addTag('admin', 'Quản trị giao dịch & log')
-    .build();
+    .addTag('transaction', 'Tra cứu & đối soát giao dịch (partner)')
+    .addTag('admin', 'Quản trị partner & log')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'admin-jwt',
+    );
+
+  const swaggerConfig = builder.build();
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
   const scalarOptions: ApiReferenceOptions = {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     spec: { content: document } as any,
     configuration: {
       theme: 'purple',

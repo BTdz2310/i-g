@@ -19,6 +19,17 @@ const envSchema = z.object({
   RECONCILE_GRACE_MIN: z.coerce.number().default(10),
   RECONCILE_MAX_ATTEMPTS: z.coerce.number().default(20),
   HTTP_TIMEOUT_MS: z.coerce.number().default(15000),
+
+  REDIS_URL: z.string().min(1),
+  PARTNER_AUTH_SKEW_SECONDS: z.coerce.number().default(300),
+  PARTNER_AUTH_NONCE_TTL_SECONDS: z.coerce.number().default(300),
+  PARTNER_AUTH_SIGNATURE_VERSION: z.string().default('v1'),
+  PARTNER_SECRET_MASTER_KEY: z.string().min(1),
+
+  ADMIN_JWT_SECRET: z.string().min(32),
+  ADMIN_JWT_EXPIRES_IN: z.string().default('12h'),
+  ADMIN_USERNAME: z.string().min(1).optional(),
+  ADMIN_PASSWORD: z.string().min(8).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

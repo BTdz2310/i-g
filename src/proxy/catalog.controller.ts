@@ -1,10 +1,14 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PviClient } from '../pvi/pvi.client';
 import { CategoryInput } from '../pvi/dto/category.dto';
 import { CatalogItemDto, CatalogQueryDto } from './dto/catalog-query.dto';
+import { PartnerAuthGuard } from '../partner-auth/partner-auth.guard';
+import { ApiPartnerAuth } from '../common/decorators/api-partner-auth.decorator';
 
 @ApiTags('catalog')
+@ApiPartnerAuth()
+@UseGuards(PartnerAuthGuard)
 @Controller('api/pvi/catalog')
 export class CatalogController {
   constructor(private readonly pvi: PviClient) {}

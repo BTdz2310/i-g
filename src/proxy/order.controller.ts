@@ -1,12 +1,22 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBody, ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PviClient } from '../pvi/pvi.client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderInput } from '../pvi/dto/create-order.dto';
 import { CreateOrderDto, CreateOrderResultDto } from './dto/create-order.dto';
 import { randomUUID } from 'crypto';
+import { PartnerAuthGuard } from '../partner-auth/partner-auth.guard';
+import { RawBodyRequest } from '../common/types/raw-body';
+import { ApiPartnerAuth } from '../common/decorators/api-partner-auth.decorator';
 
 @ApiTags('order')
+@ApiPartnerAuth()
+@UseGuards(PartnerAuthGuard)
 @Controller('api/pvi/order')
 export class OrderController {
   constructor(
@@ -17,20 +27,27 @@ export class OrderController {
   @Post()
   @ApiOperation({
     summary: 'Tạo đơn bảo hiểm TNDS',
-    description: 'Gateway tự sinh ma_giaodich (UUID) và trả về. Đơn được gửi sang PVI — GCN sẽ về qua callback hoặc poll GET /order/:maGiaodich.',
+    description:
+      'Gateway tự sinh ma_giaodich (UUID) và trả về. Đơn được gửi sang PVI — GCN sẽ về qua callback hoặc poll GET /order/:maGiaodich.',
   })
   @ApiBody({ type: CreateOrderDto })
-  @ApiCreatedResponse({ type: CreateOrderResultDto, description: 'maGiaodich để track đơn + Pr_key nội bộ PVI' })
-  async createOrder(@Body() body: CreateOrderDto) {
+  @ApiCreatedResponse({
+    type: CreateOrderResultDto,
+    description: 'maGiaodich để track đơn + Pr_key nội bộ PVI',
+  })
+  async createOrder(@Req() req: RawBodyRequest, @Body() body: CreateOrderDto) {
     const maGiaodich = randomUUID();
     const productKind = body.productKind ?? 'AUTO';
+    const partnerId = (req as any).partner?.id as string | undefined;
 
     const tx = await this.prisma.transaction.create({
       data: {
         maGiaodich,
         productKind,
         status: 'SUBMITTING',
-        inboundPayload: body as object,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        inboundPayload: JSON.parse(JSON.stringify(body)),
+        ...(partnerId ? { partnerId } : {}),
       },
     });
 
@@ -88,7 +105,8 @@ export class OrderController {
         data: {
           status: 'SUBMITTED_OK',
           pviPrKey: String(result.Pr_key),
-          pviResponse: result as object,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          pviResponse: JSON.parse(JSON.stringify(result)),
           paymentUrl: result.URL_Payment ?? null,
           serialNumber: result.SerialNumber ?? null,
         },
