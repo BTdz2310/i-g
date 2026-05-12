@@ -1,14 +1,13 @@
 services:
   db:
     image: postgres:16-alpine
-    platform: linux/arm64
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-insurance_gateway}
       POSTGRES_USER: ${POSTGRES_USER:-app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +19,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    platform: linux/arm64
     restart: unless-stopped
     command:
       ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-secret}"]
@@ -36,7 +34,6 @@ services:
 
   app:
     build: .
-    platform: linux/arm64
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
