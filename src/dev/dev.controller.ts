@@ -1,5 +1,6 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
+import { createHash, createHmac, randomUUID } from 'crypto';
 
 const HTML = `<!DOCTYPE html>
 <html lang="vi">
@@ -73,57 +74,35 @@ const HTML = `<!DOCTYPE html>
 </div>
 
 <script>
-async function hmacSha256(secret, message) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function sha256(data) {
-  const buf = new TextEncoder().encode(data);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function uuid() {
-  return crypto.randomUUID();
-}
-
 async function generate() {
   const errEl = document.getElementById('error');
   errEl.style.display = 'none';
   try {
-    const secret = document.getElementById('secret').value.trim();
-    const clientId = document.getElementById('clientId').value.trim();
-    const keyId = document.getElementById('keyId').value.trim();
-    const method = document.getElementById('method').value;
-    const path = document.getElementById('path').value.trim();
-    const body = document.getElementById('body').value;
+    const payload = {
+      secret: document.getElementById('secret').value.trim(),
+      clientId: document.getElementById('clientId').value.trim(),
+      keyId: document.getElementById('keyId').value.trim(),
+      method: document.getElementById('method').value,
+      path: document.getElementById('path').value.trim(),
+      body: document.getElementById('body').value,
+    };
 
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const nonce = uuid();
-    const bodyHash = await sha256(body);
-    const canonical = [method.toUpperCase(), path, timestamp, nonce, bodyHash].join('\\n');
-    const signature = await hmacSha256(secret, canonical);
-
-    const headers = [
-      ['X-Client-Id', clientId],
-      ['X-Key-Id', keyId],
-      ['X-Timestamp', timestamp],
-      ['X-Nonce', nonce],
-      ['X-Signature-Version', 'v1'],
-      ['X-Signature', signature],
-    ];
+    const res = await fetch('/dev/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Sign failed: ' + res.status + ' ' + (await res.text()));
+    const headers = await res.json();
 
     const container = document.getElementById('headers');
-    container.innerHTML = headers.map(([name, value]) => \`
-      <div class="header-row">
-        <span class="header-name">\${name}</span>
-        <span class="header-value" id="val-\${name}">\${value}</span>
-        <button class="copy-btn" onclick="copyVal('\${name}', this)">&nbsp;Copy&nbsp;</button>
-      </div>
-    \`).join('');
+    container.innerHTML = headers.map(function (h) {
+      return '<div class="header-row">' +
+        '<span class="header-name">' + h[0] + '</span>' +
+        '<span class="header-value" id="val-' + h[0] + '">' + h[1] + '</span>' +
+        '<button class="copy-btn" onclick="copyVal(\\'' + h[0] + '\\', this)">&nbsp;Copy&nbsp;</button>' +
+        '</div>';
+    }).join('');
 
     document.getElementById('result').style.display = 'block';
   } catch (e) {
@@ -134,15 +113,39 @@ async function generate() {
 
 function copyVal(name, btn) {
   const val = document.getElementById('val-' + name).textContent;
-  navigator.clipboard.writeText(val).then(() => {
+  const done = function () {
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = ' Copy '; btn.classList.remove('copied'); }, 1500);
-  });
+    setTimeout(function () { btn.textContent = ' Copy '; btn.classList.remove('copied'); }, 1500);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(val).then(done).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
+  function fallbackCopy() {
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (_) {}
+    document.body.removeChild(ta);
+  }
 }
 </script>
 </body>
 </html>`;
+
+interface SignBody {
+  secret: string;
+  clientId: string;
+  keyId: string;
+  method: string;
+  path: string;
+  body: string;
+}
 
 @Controller('dev')
 export class DevController {
@@ -150,5 +153,32 @@ export class DevController {
   getSigner(@Res() res: Response) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(HTML);
+  }
+
+  @Post('sign')
+  sign(@Body() input: SignBody) {
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const nonce = randomUUID();
+    const bodyHash = createHash('sha256')
+      .update(input.body ?? '')
+      .digest('hex');
+    const canonical = [
+      input.method.toUpperCase(),
+      input.path,
+      timestamp,
+      nonce,
+      bodyHash,
+    ].join('\n');
+    const signature = createHmac('sha256', input.secret)
+      .update(canonical)
+      .digest('hex');
+    return [
+      ['X-Client-Id', input.clientId],
+      ['X-Key-Id', input.keyId],
+      ['X-Timestamp', timestamp],
+      ['X-Nonce', nonce],
+      ['X-Signature-Version', 'v1'],
+      ['X-Signature', signature],
+    ];
   }
 }
