@@ -15,7 +15,6 @@ import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { DevModule } from './dev/dev.module';
 import { HealthModule } from './health/health.module';
-import { getEnv } from './config/env';
 
 @Module({
   imports: [
@@ -23,9 +22,13 @@ import { getEnv } from './config/env';
     // 1 throttler duy nhất — limit mặc định cho mọi endpoint.
     // Các endpoint nhạy cảm override bằng @Throttle({ default: { limit, ttl } }).
     // Redis storage để share counter giữa các cluster workers.
-    ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60_000, limit: 100 }],
-      storage: new ThrottlerStorageRedisService(new Redis(getEnv().REDIS_URL)),
+    ThrottlerModule.forRootAsync({
+      useFactory: () => ({
+        throttlers: [{ ttl: 60_000, limit: 100 }],
+        storage: new ThrottlerStorageRedisService(
+          new Redis(process.env.REDIS_URL!),
+        ),
+      }),
     }),
     PrismaModule,
     AuditModule,
