@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'insurance-gateway',
-      script: 'dist/src/main.js',
+      script: 'dist/main.js',
       instances: 'max',
       exec_mode: 'cluster',
       node_args: '--max-old-space-size=512',
