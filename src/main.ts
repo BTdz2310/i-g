@@ -4,6 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiReferenceOptions } from '@scalar/nestjs-api-reference';
 import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { validateEnv } from './config/env';
@@ -18,6 +19,10 @@ async function bootstrap() {
   // Tin tưởng X-Forwarded-* từ reverse proxy (Nginx/ALB) đứng trước app.
   // Cần thiết để req.ip trả IP thật của client cho IP allowlist của partner.
   app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+
+  // Security headers: HSTS, X-Frame-Options, X-Content-Type-Options, etc.
+  // CSP tắt vì Scalar (/docs) cần inline scripts.
+  app.use(helmet({ contentSecurityPolicy: false }));
 
   app.use(
     json({

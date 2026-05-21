@@ -16,11 +16,13 @@ FROM --platform=linux/arm64 node:22-alpine3.21 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY prisma ./prisma
-COPY prisma.config.ts ./prisma.config.ts
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node prisma.config.ts ./prisma.config.ts
+
+USER node
 
 EXPOSE 3000
 CMD ["node", "dist/main"]
