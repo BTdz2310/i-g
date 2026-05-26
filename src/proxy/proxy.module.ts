@@ -6,6 +6,8 @@ import { VehicleTypeController } from './vehicle-type.controller';
 import { QuoteController } from './quote.controller';
 import { OrderController } from './order.controller';
 import { PolicyController } from './policy.controller';
+import { QuoteMotoController } from './quote-moto.controller';
+import { OrderMotoController } from './order-moto.controller';
 
 @Module({
   imports: [PviModule, PartnerAuthModule],
@@ -15,6 +17,8 @@ import { PolicyController } from './policy.controller';
     QuoteController,
     OrderController,
     PolicyController,
+    QuoteMotoController,
+    OrderMotoController,
   ],
 })
 export class ProxyModule {}

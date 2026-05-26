@@ -11,6 +11,8 @@ import { CreateOrderInput, CreateOrderResult } from './dto/create-order.dto';
 import { CategoryInput, CategoryItem } from './dto/category.dto';
 import { VehicleTypeInput, VehicleTypeItem } from './dto/vehicle-type.dto';
 import { GetPolicyResult } from './dto/get-policy.dto';
+import { FeeMotoInput, FeeMotoResult } from './dto/fee-moto.dto';
+import { CreateMotoOrderInput, CreateMotoOrderResult } from './dto/create-order-moto.dto';
 
 @Injectable()
 export class PviClient {
@@ -61,6 +63,37 @@ export class PviClient {
     };
     const raw = await this.call(this.cfg.ep.getVehicleType, body) as { Data: VehicleTypeItem[] };
     return raw.Data ?? [];
+  }
+
+  async getMotoFee(input: FeeMotoInput): Promise<FeeMotoResult> {
+    const body = {
+      ...input,
+      CpId: this.cfg.cpId,
+      Sign: this.sign.forGetMotoFee({
+        ngay_dau: input.ngay_dau,
+        ngay_cuoi: input.ngay_cuoi,
+        loai_xe: input.loai_xe,
+      }),
+    };
+    const raw = await this.call(this.cfg.ep.getFeeMoto, body);
+    return raw as FeeMotoResult;
+  }
+
+  async createMotoOrder(input: CreateMotoOrderInput): Promise<CreateMotoOrderResult> {
+    const body = {
+      ...input,
+      CpId: this.cfg.cpId,
+      Sign: this.sign.forCreateMotoOrder({
+        bien_kiemsoat: input.bien_kiemsoat,
+        email: input.email,
+        so_dienthoai: input.so_dienthoai,
+        nhan_hieu: input.nhan_hieu,
+        loai_xe: input.loai_xe,
+        nam_sanxuat: input.nam_sanxuat,
+      }),
+    };
+    const raw = await this.call(this.cfg.ep.createOrderMoto, body, input.ma_giaodich);
+    return raw as CreateMotoOrderResult;
   }
 
   async getPolicy(maGiaodich: string): Promise<GetPolicyResult> {

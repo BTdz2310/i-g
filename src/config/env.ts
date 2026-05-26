@@ -10,6 +10,8 @@ const envSchema = z.object({
   PVI_EP_CATEGORY: z.string().min(1),
   PVI_EP_GET_VEHICLE_TYPE: z.string().min(1),
   PVI_EP_GET_POLICY: z.string().min(1),
+  PVI_EP_GET_FEE_MOTO: z.string().min(1),
+  PVI_EP_CREATE_ORDER_MOTO: z.string().min(1),
 
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().default(3000),

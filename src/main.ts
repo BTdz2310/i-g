@@ -50,6 +50,8 @@ async function bootstrap() {
     .addTag('order', 'Tạo đơn & tra cứu đơn bảo hiểm')
     .addTag('callback', 'Webhook từ PVI khi đơn được cấp')
     .addTag('transaction', 'Tra cứu & đối soát giao dịch (partner)')
+    .addTag('quote-moto', 'Tính phí TNDS xe máy')
+    .addTag('order-moto', 'Tạo & tra cứu đơn TNDS xe máy')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'admin-jwt',

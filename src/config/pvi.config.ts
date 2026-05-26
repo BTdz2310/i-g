@@ -7,6 +7,8 @@ export interface PviEndpoints {
   category: string;
   getVehicleType: string;
   getPolicy: string;
+  getFeeMoto: string;
+  createOrderMoto: string;
 }
 
 @Injectable()
@@ -29,6 +31,8 @@ export class PviConfig {
       category: env.PVI_EP_CATEGORY,
       getVehicleType: env.PVI_EP_GET_VEHICLE_TYPE,
       getPolicy: env.PVI_EP_GET_POLICY,
+      getFeeMoto: env.PVI_EP_GET_FEE_MOTO,
+      createOrderMoto: env.PVI_EP_CREATE_ORDER_MOTO,
     };
   }
 }

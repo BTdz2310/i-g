@@ -26,13 +26,31 @@ export class SignService {
   }
 
   // Sign = MD5(Key + ten_dmuc + ma_user + ma_donvi + giatri_chon)
-  forCategory(p: { ten_dmuc: string; ma_user: string; ma_donvi: string; giatri_chon: string }): string {
-    return md5(this.cfg.key + p.ten_dmuc + p.ma_user + p.ma_donvi + p.giatri_chon);
+  forCategory(p: {
+    ten_dmuc: string;
+    ma_user: string;
+    ma_donvi: string;
+    giatri_chon: string;
+  }): string {
+    return md5(
+      this.cfg.key + p.ten_dmuc + p.ma_user + p.ma_donvi + p.giatri_chon,
+    );
   }
 
   // Sign = MD5(Key + SoChoNgoi + TrongTai + Ma_MDSD + LoaiHinh)
-  forGetVehicleType(p: { SoChoNgoi: number; TrongTai: number; Ma_MDSD: string; LoaiHinh: string }): string {
-    return md5(this.cfg.key + String(p.SoChoNgoi) + String(p.TrongTai) + p.Ma_MDSD + p.LoaiHinh);
+  forGetVehicleType(p: {
+    SoChoNgoi: number;
+    TrongTai: number;
+    Ma_MDSD: string;
+    LoaiHinh: string;
+  }): string {
+    return md5(
+      this.cfg.key +
+        String(p.SoChoNgoi) +
+        String(p.TrongTai) +
+        p.Ma_MDSD +
+        p.LoaiHinh,
+    );
   }
 
   // Sign = MD5(Key + RequestId)
@@ -40,8 +58,44 @@ export class SignService {
     return md5(this.cfg.key + p.RequestId);
   }
 
+  // Sign = MD5(Key + ngay_dau + ngay_cuoi + loai_xe)
+  forGetMotoFee(p: {
+    ngay_dau: string;
+    ngay_cuoi: string;
+    loai_xe: string;
+  }): string {
+    return md5(this.cfg.key + p.ngay_dau + p.ngay_cuoi + p.loai_xe);
+  }
+
+  // Sign = MD5(Key + bien_kiemsoat + email + ma_user + so_dienthoai + nhan_hieu + loai_xe + nam_sanxuat)
+  // ma_user cố định '' (verified với PVI dev server)
+  forCreateMotoOrder(p: {
+    bien_kiemsoat: string;
+    email: string;
+    so_dienthoai: string;
+    nhan_hieu: string;
+    loai_xe: string;
+    nam_sanxuat: string;
+  }): string {
+    return md5(
+      this.cfg.key +
+        p.bien_kiemsoat +
+        p.email +
+        '' +
+        p.so_dienthoai +
+        p.nhan_hieu +
+        p.loai_xe +
+        p.nam_sanxuat,
+    );
+  }
+
   // Verify callback: Sign = MD5(Key + RequestId + PolicyNumber + URL)
-  verifyCallback(p: { RequestId: string; PolicyNumber: string; URL: string; Sign: string }): boolean {
+  verifyCallback(p: {
+    RequestId: string;
+    PolicyNumber: string;
+    URL: string;
+    Sign: string;
+  }): boolean {
     const expected = md5(this.cfg.key + p.RequestId + p.PolicyNumber + p.URL);
     return timingSafeEqual(expected, p.Sign);
   }
