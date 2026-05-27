@@ -65,11 +65,18 @@ test:
       - coverage/
     expire_in: 7 days
 
+variables:
+  SAST_EXCLUDED_PATHS: "coverage, node_modules, dist, test"
+  SAST_EXCLUDED_ANALYZERS: "bandit, brakeman, flawfinder, gosec, kubesec, mobsf, phpcs-security-audit, pmd-apex, security-code-scan, sobelow, spotbugs"
+  SECRET_DETECTION_EXCLUDED_PATHS: "coverage, node_modules, dist"
+
 sast:
   stage: security
+  needs: []
 
 secret_detection:
   stage: security
+  needs: []
 
 build:
   stage: build
