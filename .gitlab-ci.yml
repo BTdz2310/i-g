@@ -15,12 +15,14 @@ install:
     key:
       files:
         - pnpm-lock.yaml
+        - prisma/schema.prisma
     paths:
       - node_modules/
     policy: pull-push
   script:
     - npm install -g pnpm
     - pnpm install --frozen-lockfile
+    - pnpm exec prisma generate
 
 lint:
   stage: test
@@ -29,6 +31,7 @@ lint:
     key:
       files:
         - pnpm-lock.yaml
+        - prisma/schema.prisma
     paths:
       - node_modules/
     policy: pull
@@ -44,6 +47,7 @@ test:
     key:
       files:
         - pnpm-lock.yaml
+        - prisma/schema.prisma
     paths:
       - node_modules/
     policy: pull
@@ -74,6 +78,7 @@ build:
     key:
       files:
         - pnpm-lock.yaml
+        - prisma/schema.prisma
     paths:
       - node_modules/
     policy: pull
