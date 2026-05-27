@@ -1,24 +1,15 @@
 stages:
+  - install
   - test
   - security
   - build
 
-variables:
-  NODE_VERSION: "20"
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
 
-# Cache node_modules giữa các job
-.node_cache: &node_cache
-  cache:
-    key:
-      files:
-        - pnpm-lock.yaml
-    paths:
-      - node_modules/
-    policy: pull
-
-# ─── Install ────────────────────────────────────────────────
 install:
-  stage: test
+  stage: install
   image: node:20-alpine
   cache:
     key:
@@ -31,21 +22,31 @@ install:
     - npm install -g pnpm
     - pnpm install --frozen-lockfile
 
-# ─── Lint ───────────────────────────────────────────────────
 lint:
   stage: test
   image: node:20-alpine
-  <<: *node_cache
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+    policy: pull
   needs: [install]
   script:
     - npm install -g pnpm
     - pnpm lint
 
-# ─── Unit Tests ─────────────────────────────────────────────
 test:
   stage: test
   image: node:20-alpine
-  <<: *node_cache
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+    policy: pull
   needs: [install]
   script:
     - npm install -g pnpm
@@ -60,22 +61,22 @@ test:
       - coverage/
     expire_in: 7 days
 
-# ─── SAST ───────────────────────────────────────────────────
-include:
-  - template: Security/SAST.gitlab-ci.yml
-  - template: Security/Secret-Detection.gitlab-ci.yml
-
 sast:
   stage: security
 
 secret_detection:
   stage: security
 
-# ─── Build ──────────────────────────────────────────────────
 build:
   stage: build
   image: node:20-alpine
-  <<: *node_cache
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+    policy: pull
   needs: [install]
   script:
     - npm install -g pnpm
@@ -86,4 +87,3 @@ build:
     expire_in: 1 day
   only:
     - main
-    - feat/*
