@@ -1,4 +1,5 @@
-import md5 from 'md5';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import md5 = require('md5');
 import { SignService } from './sign.service';
 import { PviConfig, PviEndpoints } from '../config/pvi.config';
 

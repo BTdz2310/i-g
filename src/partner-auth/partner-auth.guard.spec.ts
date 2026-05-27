@@ -17,6 +17,8 @@ const VALID_ENV = {
   PVI_EP_CATEGORY: '/cat',
   PVI_EP_GET_VEHICLE_TYPE: '/vt',
   PVI_EP_GET_POLICY: '/pol',
+  PVI_EP_GET_FEE_MOTO: '/fee-moto',
+  PVI_EP_CREATE_ORDER_MOTO: '/order-moto',
   DATABASE_URL: 'postgres://localhost/test',
   REDIS_URL: 'redis://localhost',
   PARTNER_SECRET_MASTER_KEY: Buffer.alloc(32, 0x01).toString('base64'),
