@@ -11,6 +11,8 @@ const makeCfg = () => ({
     category: '/getCategory',
     getVehicleType: '/getVehicleType',
     getPolicy: '/getPolicy',
+    getFeeMoto: '/getFeeMoto',
+    createOrderMoto: '/createOrderMoto',
   },
   timeoutMs: 5000,
 });
@@ -21,6 +23,8 @@ const makeSign = () => ({
   forCategory: jest.fn().mockReturnValue('sign-cat'),
   forGetVehicleType: jest.fn().mockReturnValue('sign-vt'),
   forGetPolicy: jest.fn().mockReturnValue('sign-pol'),
+  forGetMotoFee: jest.fn().mockReturnValue('sign-moto-fee'),
+  forCreateMotoOrder: jest.fn().mockReturnValue('sign-moto-order'),
 });
 
 const makeAudit = () => ({ logOut: jest.fn().mockResolvedValue(undefined) });
@@ -130,6 +134,77 @@ describe('PviClient', () => {
       });
       const result = await client.getVehicleType({ SoChoNgoi: 4 } as any);
       expect(result).toEqual([{ Value: 'LX01', Text: 'Xe con 4 chỗ' }]);
+    });
+  });
+
+  describe('getMotoFee', () => {
+    it('returns moto fee result', async () => {
+      const { client } = makeClient({ Status: '00', TotalFee: 200000 });
+      const result = await client.getMotoFee({
+        ngay_dau: '2025-01-01',
+        ngay_cuoi: '2025-12-31',
+        loai_xe: '1',
+      } as any);
+      expect((result as any).TotalFee).toBe(200000);
+    });
+
+    it('includes CpId and Sign in request', async () => {
+      const { client, http } = makeClient({ Status: '00' });
+      await client.getMotoFee({
+        ngay_dau: '2025-01-01',
+        ngay_cuoi: '2025-12-31',
+        loai_xe: '1',
+      } as any);
+      const body = http.post.mock.calls[0][1];
+      expect(body.CpId).toBe('CP001');
+      expect(body.Sign).toBe('sign-moto-fee');
+    });
+
+    it('throws PviBusinessError when Status !== 00', async () => {
+      const { client } = makeClient({ Status: '-200', Message: 'Invalid moto data' });
+      await expect(
+        client.getMotoFee({ ngay_dau: '2025-01-01', ngay_cuoi: '2025-12-31', loai_xe: '1' } as any),
+      ).rejects.toBeInstanceOf(PviBusinessError);
+    });
+  });
+
+  describe('createMotoOrder', () => {
+    const motoInput: any = {
+      ma_giaodich: 'GD-MOTO-001',
+      bien_kiemsoat: '51A-12345',
+      email: 'a@example.com',
+      so_dienthoai: '0901234567',
+      nhan_hieu: 'Honda',
+      loai_xe: '1',
+      nam_sanxuat: '2020',
+    };
+
+    it('returns moto order result', async () => {
+      const { client } = makeClient({ Status: '00', Pr_key: 99, URL_Payment: 'https://pay.pvi.com/moto' });
+      const result = await client.createMotoOrder(motoInput);
+      expect((result as any).Pr_key).toBe(99);
+    });
+
+    it('includes CpId and Sign in request', async () => {
+      const { client, http } = makeClient({ Status: '00', Pr_key: 1 });
+      await client.createMotoOrder(motoInput);
+      const body = http.post.mock.calls[0][1];
+      expect(body.CpId).toBe('CP001');
+      expect(body.Sign).toBe('sign-moto-order');
+    });
+
+    it('passes maGiaodich to audit', async () => {
+      const { client, audit } = makeClient({ Status: '00', Pr_key: 1 });
+      await client.createMotoOrder(motoInput);
+      expect(audit.logOut).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.anything(),
+        expect.anything(),
+        expect.any(Number),
+        expect.any(Number),
+        'GD-MOTO-001',
+        undefined,
+      );
     });
   });
 

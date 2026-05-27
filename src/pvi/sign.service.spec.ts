@@ -86,6 +86,43 @@ describe('SignService', () => {
     });
   });
 
+  describe('forGetMotoFee', () => {
+    const p = { ngay_dau: '2025-01-01', ngay_cuoi: '2025-12-31', loai_xe: '1' };
+    it('returns 32-char hex', () => {
+      expect(svc.forGetMotoFee(p)).toHaveLength(32);
+    });
+    it('is deterministic', () => {
+      expect(svc.forGetMotoFee(p)).toBe(svc.forGetMotoFee(p));
+    });
+    it('changes with different loai_xe', () => {
+      expect(svc.forGetMotoFee({ ...p, loai_xe: '1' })).not.toBe(
+        svc.forGetMotoFee({ ...p, loai_xe: '2' }),
+      );
+    });
+  });
+
+  describe('forCreateMotoOrder', () => {
+    const p = {
+      bien_kiemsoat: '51A-12345',
+      email: 'a@example.com',
+      so_dienthoai: '0901234567',
+      nhan_hieu: 'Honda',
+      loai_xe: '1',
+      nam_sanxuat: '2020',
+    };
+    it('returns 32-char hex', () => {
+      expect(svc.forCreateMotoOrder(p)).toHaveLength(32);
+    });
+    it('is deterministic', () => {
+      expect(svc.forCreateMotoOrder(p)).toBe(svc.forCreateMotoOrder(p));
+    });
+    it('changes with different bien_kiemsoat', () => {
+      expect(svc.forCreateMotoOrder({ ...p, bien_kiemsoat: '51A-11111' })).not.toBe(
+        svc.forCreateMotoOrder({ ...p, bien_kiemsoat: '51A-99999' }),
+      );
+    });
+  });
+
   describe('verifyCallback', () => {
     it('returns true for correct signature', () => {
       const key = cfg.key;
