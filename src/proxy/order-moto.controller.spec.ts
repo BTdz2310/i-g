@@ -48,7 +48,9 @@ describe('OrderMotoController', () => {
     expect(result.paymentUrl).toBe('https://pay.pvi.com/moto');
     expect(result.serialNumber).toBe('SN-MOTO-001');
     expect(prisma.transaction.create).toHaveBeenCalledTimes(1);
-    expect(prisma.transaction.create.mock.calls[0][0].data.productKind).toBe('MOTO');
+    expect(prisma.transaction.create.mock.calls[0][0].data.productKind).toBe(
+      'MOTO',
+    );
     expect(prisma.transaction.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: 'SUBMITTED_OK' }),
@@ -59,7 +61,9 @@ describe('OrderMotoController', () => {
   it('updates transaction to SUBMITTED_FAIL and rethrows on PVI error', async () => {
     mockPvi.createMotoOrder.mockRejectedValue(new Error('PVI moto timeout'));
     const req: any = { partner: { id: 'partner-1' } };
-    await expect(ctrl.createOrder(req, BASE_BODY)).rejects.toThrow('PVI moto timeout');
+    await expect(ctrl.createOrder(req, BASE_BODY)).rejects.toThrow(
+      'PVI moto timeout',
+    );
     expect(prisma.transaction.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -94,7 +98,10 @@ describe('OrderMotoController', () => {
 
   it('returns null for missing URL_Payment and SerialNumber', async () => {
     mockPvi.createMotoOrder.mockResolvedValue({ Pr_key: 7 });
-    const result = await ctrl.createOrder({ partner: { id: 'p1' } } as any, BASE_BODY);
+    const result = await ctrl.createOrder(
+      { partner: { id: 'p1' } } as any,
+      BASE_BODY,
+    );
     expect(result.paymentUrl).toBeNull();
     expect(result.serialNumber).toBeNull();
   });

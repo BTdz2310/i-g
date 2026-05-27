@@ -23,7 +23,10 @@ describe('PdfController', () => {
     await ctrl.download('gd-001', res);
 
     expect(mockStorage.getOrFetch).toHaveBeenCalledWith('gd-001');
-    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'application/pdf',
+    );
     expect(res.setHeader).toHaveBeenCalledWith('Content-Length', 5678);
     expect(res.setHeader).toHaveBeenCalledWith(
       'Content-Disposition',
@@ -36,6 +39,8 @@ describe('PdfController', () => {
     const { NotFoundException } = await import('@nestjs/common');
     mockStorage.getOrFetch.mockRejectedValue(new NotFoundException());
     const res: any = { setHeader: jest.fn() };
-    await expect(ctrl.download('gd-missing', res)).rejects.toThrow(NotFoundException);
+    await expect(ctrl.download('gd-missing', res)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });

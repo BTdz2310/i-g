@@ -161,9 +161,16 @@ describe('PviClient', () => {
     });
 
     it('throws PviBusinessError when Status !== 00', async () => {
-      const { client } = makeClient({ Status: '-200', Message: 'Invalid moto data' });
+      const { client } = makeClient({
+        Status: '-200',
+        Message: 'Invalid moto data',
+      });
       await expect(
-        client.getMotoFee({ ngay_dau: '2025-01-01', ngay_cuoi: '2025-12-31', loai_xe: '1' } as any),
+        client.getMotoFee({
+          ngay_dau: '2025-01-01',
+          ngay_cuoi: '2025-12-31',
+          loai_xe: '1',
+        } as any),
       ).rejects.toBeInstanceOf(PviBusinessError);
     });
   });
@@ -180,7 +187,11 @@ describe('PviClient', () => {
     };
 
     it('returns moto order result', async () => {
-      const { client } = makeClient({ Status: '00', Pr_key: 99, URL_Payment: 'https://pay.pvi.com/moto' });
+      const { client } = makeClient({
+        Status: '00',
+        Pr_key: 99,
+        URL_Payment: 'https://pay.pvi.com/moto',
+      });
       const result = await client.createMotoOrder(motoInput);
       expect((result as any).Pr_key).toBe(99);
     });

@@ -117,9 +117,9 @@ describe('SignService', () => {
       expect(svc.forCreateMotoOrder(p)).toBe(svc.forCreateMotoOrder(p));
     });
     it('changes with different bien_kiemsoat', () => {
-      expect(svc.forCreateMotoOrder({ ...p, bien_kiemsoat: '51A-11111' })).not.toBe(
-        svc.forCreateMotoOrder({ ...p, bien_kiemsoat: '51A-99999' }),
-      );
+      expect(
+        svc.forCreateMotoOrder({ ...p, bien_kiemsoat: '51A-11111' }),
+      ).not.toBe(svc.forCreateMotoOrder({ ...p, bien_kiemsoat: '51A-99999' }));
     });
   });
 

@@ -71,7 +71,9 @@ describe('PdfStorageService', () => {
 
     it('fetches from PVI when file not cached', async () => {
       (fs.stat as jest.Mock).mockRejectedValue(new Error('ENOENT'));
-      prisma.transaction.findUnique.mockResolvedValue({ pdfUrl: 'https://pvi.example.com/doc.pdf' });
+      prisma.transaction.findUnique.mockResolvedValue({
+        pdfUrl: 'https://pvi.example.com/doc.pdf',
+      });
       const buf = Buffer.from('pdf-content');
       http.get.mockReturnValue(of({ data: buf }));
 
@@ -84,19 +86,25 @@ describe('PdfStorageService', () => {
       (fs.stat as jest.Mock).mockRejectedValue(new Error('ENOENT'));
       prisma.transaction.findUnique.mockResolvedValue({ pdfUrl: null });
 
-      await expect(svc.getOrFetch('gd-missing')).rejects.toThrow(NotFoundException);
+      await expect(svc.getOrFetch('gd-missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when transaction not found', async () => {
       (fs.stat as jest.Mock).mockRejectedValue(new Error('ENOENT'));
       prisma.transaction.findUnique.mockResolvedValue(null);
 
-      await expect(svc.getOrFetch('gd-notfound')).rejects.toThrow(NotFoundException);
+      await expect(svc.getOrFetch('gd-notfound')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('re-fetches when cached file has size 0', async () => {
       (fs.stat as jest.Mock).mockResolvedValue({ size: 0 });
-      prisma.transaction.findUnique.mockResolvedValue({ pdfUrl: 'https://pvi.example.com/doc.pdf' });
+      prisma.transaction.findUnique.mockResolvedValue({
+        pdfUrl: 'https://pvi.example.com/doc.pdf',
+      });
       const buf = Buffer.from('real-pdf');
       http.get.mockReturnValue(of({ data: buf }));
 
