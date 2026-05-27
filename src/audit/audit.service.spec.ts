@@ -17,7 +17,14 @@ describe('AuditService', () => {
 
   describe('logOut', () => {
     it('creates OUT_TO_PVI record', async () => {
-      await svc.logOut('/fee', { ma_giaodich: 'GD-1' }, { result: 'ok' }, 200, 123, 'GD-1');
+      await svc.logOut(
+        '/fee',
+        { ma_giaodich: 'GD-1' },
+        { result: 'ok' },
+        200,
+        123,
+        'GD-1',
+      );
       expect(prisma.apiCallLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           direction: 'OUT_TO_PVI',
@@ -30,12 +37,18 @@ describe('AuditService', () => {
     });
 
     it('masks sensitive fields in request and response', async () => {
-      await svc.logOut('/order', { sign: 'secret123', amount: 100 }, { token: 'tok', ok: true }, 200, 50);
+      await svc.logOut(
+        '/order',
+        { sign: 'secret123', amount: 100 },
+        { token: 'tok', ok: true },
+        200,
+        50,
+      );
       const call = prisma.apiCallLog.create.mock.calls[0][0];
-      expect((call.data.request as any).sign).toBe('***');
-      expect((call.data.request as any).amount).toBe(100);
-      expect((call.data.response as any).token).toBe('***');
-      expect((call.data.response as any).ok).toBe(true);
+      expect(call.data.request.sign).toBe('***');
+      expect(call.data.request.amount).toBe(100);
+      expect(call.data.response.token).toBe('***');
+      expect(call.data.response.ok).toBe(true);
     });
 
     it('sets maGiaodich to null when not provided', async () => {

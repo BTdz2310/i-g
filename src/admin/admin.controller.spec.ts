@@ -20,7 +20,12 @@ const makeCtrl = (overrides: Record<string, any> = {}) => {
     sign: jest.fn().mockReturnValue({ token: 'tok', expiresIn: '12h' }),
     ...overrides.adminJwt,
   };
-  const ctrl = new AdminController(prisma as any, partnerService as any, adminService as any, adminJwt as any);
+  const ctrl = new AdminController(
+    prisma as any,
+    partnerService,
+    adminService,
+    adminJwt,
+  );
   return { ctrl, prisma, partnerService, adminService, adminJwt };
 };
 
@@ -28,23 +33,38 @@ describe('AdminController', () => {
   describe('login', () => {
     it('returns JWT on valid credentials', async () => {
       const { ctrl, adminService } = makeCtrl();
-      adminService.findByUsername.mockResolvedValue({ id: 'a1', username: 'admin', passwordHash: 'h' });
+      adminService.findByUsername.mockResolvedValue({
+        id: 'a1',
+        username: 'admin',
+        passwordHash: 'h',
+      });
       adminService.verifyPassword.mockResolvedValue(true);
-      const result = await ctrl.login({ username: 'admin', password: 'pw' } as any);
+      const result = await ctrl.login({
+        username: 'admin',
+        password: 'pw',
+      });
       expect(result.token).toBe('tok');
     });
 
     it('throws Unauthorized when user not found', async () => {
       const { ctrl, adminService } = makeCtrl();
       adminService.findByUsername.mockResolvedValue(null);
-      await expect(ctrl.login({ username: 'x', password: 'y' } as any)).rejects.toThrow(UnauthorizedException);
+      await expect(
+        ctrl.login({ username: 'x', password: 'y' } as any),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws Unauthorized on wrong password', async () => {
       const { ctrl, adminService } = makeCtrl();
-      adminService.findByUsername.mockResolvedValue({ id: 'a1', username: 'admin', passwordHash: 'h' });
+      adminService.findByUsername.mockResolvedValue({
+        id: 'a1',
+        username: 'admin',
+        passwordHash: 'h',
+      });
       adminService.verifyPassword.mockResolvedValue(false);
-      await expect(ctrl.login({ username: 'admin', password: 'wrong' } as any)).rejects.toThrow(UnauthorizedException);
+      await expect(
+        ctrl.login({ username: 'admin', password: 'wrong' } as any),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -56,7 +76,7 @@ describe('AdminController', () => {
         keyId: 'kid',
         secret: 'sec',
       });
-      const result = await ctrl.createPartner({ name: 'Test' } as any);
+      const result = await ctrl.createPartner({ name: 'Test' });
       expect(result.clientId).toBe('cid');
       expect(result.keyId).toBe('kid');
       expect(result.secret).toBe('sec');
@@ -75,23 +95,33 @@ describe('AdminController', () => {
   describe('rotatePartnerSecret', () => {
     it('returns new keyId and secret', async () => {
       const { ctrl, partnerService } = makeCtrl();
-      partnerService.rotateSecret.mockResolvedValue({ keyId: 'new-kid', secret: 'new-sec' });
-      const result = await ctrl.rotatePartnerSecret('p1', {} as any);
+      partnerService.rotateSecret.mockResolvedValue({
+        keyId: 'new-kid',
+        secret: 'new-sec',
+      });
+      const result = await ctrl.rotatePartnerSecret('p1', {});
       expect(result.keyId).toBe('new-kid');
     });
 
     it('throws NotFoundException when partner not found', async () => {
       const { ctrl, partnerService } = makeCtrl();
       partnerService.rotateSecret.mockResolvedValue(null);
-      await expect(ctrl.rotatePartnerSecret('unknown', {} as any)).rejects.toThrow(NotFoundException);
+      await expect(
+        ctrl.rotatePartnerSecret('unknown', {} as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('updatePartnerStatus', () => {
     it('delegates to partnerService.updateStatus', async () => {
       const { ctrl, partnerService } = makeCtrl();
-      partnerService.updateStatus.mockResolvedValue({ id: 'p1', status: 'INACTIVE' });
-      const result = await ctrl.updatePartnerStatus('p1', { status: 'INACTIVE' } as any);
+      partnerService.updateStatus.mockResolvedValue({
+        id: 'p1',
+        status: 'INACTIVE',
+      });
+      const result = await ctrl.updatePartnerStatus('p1', {
+        status: 'INACTIVE',
+      } as any);
       expect(result.status).toBe('INACTIVE');
     });
   });
@@ -99,15 +129,20 @@ describe('AdminController', () => {
   describe('updatePartner', () => {
     it('returns updated partner', async () => {
       const { ctrl, partnerService } = makeCtrl();
-      partnerService.updatePartner.mockResolvedValue({ id: 'p1', name: 'Updated' });
-      const result = await ctrl.updatePartner('p1', { name: 'Updated' } as any);
+      partnerService.updatePartner.mockResolvedValue({
+        id: 'p1',
+        name: 'Updated',
+      });
+      const result = await ctrl.updatePartner('p1', { name: 'Updated' });
       expect(result.name).toBe('Updated');
     });
 
     it('throws NotFoundException when partner not found', async () => {
       const { ctrl, partnerService } = makeCtrl();
       partnerService.updatePartner.mockResolvedValue(null);
-      await expect(ctrl.updatePartner('unknown', {} as any)).rejects.toThrow(NotFoundException);
+      await expect(ctrl.updatePartner('unknown', {} as any)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

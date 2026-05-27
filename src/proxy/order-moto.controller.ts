@@ -1,10 +1,18 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiBody, ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { randomUUID } from 'crypto';
 import { PviClient } from '../pvi/pvi.client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderMotoDto, CreateOrderMotoResultDto } from './dto/create-order-moto.dto';
+import {
+  CreateOrderMotoDto,
+  CreateOrderMotoResultDto,
+} from './dto/create-order-moto.dto';
 import { CreateMotoOrderInput } from '../pvi/dto/create-order-moto.dto';
 import { PartnerAuthGuard } from '../partner-auth/partner-auth.guard';
 import { ApiPartnerAuth } from '../common/decorators/api-partner-auth.decorator';
@@ -29,7 +37,10 @@ export class OrderMotoController {
   })
   @ApiBody({ type: CreateOrderMotoDto })
   @ApiCreatedResponse({ type: CreateOrderMotoResultDto })
-  async createOrder(@Req() req: RawBodyRequest, @Body() body: CreateOrderMotoDto) {
+  async createOrder(
+    @Req() req: RawBodyRequest,
+    @Body() body: CreateOrderMotoDto,
+  ) {
     const maGiaodich = randomUUID();
     const partnerId = (req as any).partner?.id as string | undefined;
 

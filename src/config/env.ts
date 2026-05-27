@@ -42,7 +42,9 @@ let _env: Env;
 export function validateEnv(raw: Record<string, unknown>): Env {
   const result = envSchema.safeParse(raw);
   if (!result.success) {
-    throw new Error(`Invalid environment variables:\n${result.error.toString()}`);
+    throw new Error(
+      `Invalid environment variables:\n${result.error.toString()}`,
+    );
   }
   _env = result.data;
   return _env;

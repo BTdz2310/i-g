@@ -28,22 +28,37 @@ describe('CallbackController', () => {
 
   it('returns invalid sign response when signature fails', async () => {
     mockSign.verifyCallback.mockReturnValue(false);
-    const ctrl = new CallbackController(mockSign, makePrisma(null) as any, makeAudit() as any);
-    const result = await ctrl.handleCallback(VALID_PAYLOAD as any);
+    const ctrl = new CallbackController(
+      mockSign,
+      makePrisma(null) as any,
+      makeAudit() as any,
+    );
+    const result = await ctrl.handleCallback(VALID_PAYLOAD);
     expect(result).toEqual({ Status: '-105', Message: 'Invalid sign' });
   });
 
   it('returns not found response when transaction missing', async () => {
-    const ctrl = new CallbackController(mockSign, makePrisma(null) as any, makeAudit() as any);
-    const result = await ctrl.handleCallback(VALID_PAYLOAD as any);
-    expect(result).toEqual({ Status: '-404', Message: 'Transaction not found' });
+    const ctrl = new CallbackController(
+      mockSign,
+      makePrisma(null) as any,
+      makeAudit() as any,
+    );
+    const result = await ctrl.handleCallback(VALID_PAYLOAD);
+    expect(result).toEqual({
+      Status: '-404',
+      Message: 'Transaction not found',
+    });
   });
 
   it('returns OK idempotently when already ISSUED with same policy number', async () => {
     const tx = { status: 'ISSUED', policyNumber: 'POL-001' };
     const prisma = makePrisma(tx);
-    const ctrl = new CallbackController(mockSign, prisma as any, makeAudit() as any);
-    const result = await ctrl.handleCallback(VALID_PAYLOAD as any);
+    const ctrl = new CallbackController(
+      mockSign,
+      prisma as any,
+      makeAudit() as any,
+    );
+    const result = await ctrl.handleCallback(VALID_PAYLOAD);
     expect(result).toEqual({ Status: '00', Message: 'OK' });
     expect(prisma.transaction.update).not.toHaveBeenCalled();
   });
@@ -53,7 +68,7 @@ describe('CallbackController', () => {
     const prisma = makePrisma(tx);
     const audit = makeAudit();
     const ctrl = new CallbackController(mockSign, prisma as any, audit as any);
-    const result = await ctrl.handleCallback(VALID_PAYLOAD as any);
+    const result = await ctrl.handleCallback(VALID_PAYLOAD);
     expect(result).toEqual({ Status: '00', Message: 'OK' });
     expect(prisma.transaction.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -69,8 +84,12 @@ describe('CallbackController', () => {
   it('re-issues when ISSUED with different policy number', async () => {
     const tx = { status: 'ISSUED', policyNumber: 'POL-OLD' };
     const prisma = makePrisma(tx);
-    const ctrl = new CallbackController(mockSign, prisma as any, makeAudit() as any);
-    const result = await ctrl.handleCallback(VALID_PAYLOAD as any);
+    const ctrl = new CallbackController(
+      mockSign,
+      prisma as any,
+      makeAudit() as any,
+    );
+    const result = await ctrl.handleCallback(VALID_PAYLOAD);
     expect(result).toEqual({ Status: '00', Message: 'OK' });
     expect(prisma.transaction.update).toHaveBeenCalled();
   });

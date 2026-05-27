@@ -31,7 +31,17 @@ describe('QuoteController', () => {
 
   it('applies defaults for optional boolean fields', async () => {
     mockPvi.getFee.mockResolvedValue({});
-    await ctrl.getFee({ ma_trongtai: 'T', so_cho: 4, ma_mdsd: 'M', ma_loaixe: 'L', giodau: '0', giocuoi: '0', ngaydau: '2025-01-01', ngaycuoi: '2025-12-31', thamgia_tndsbb: true } as any);
+    await ctrl.getFee({
+      ma_trongtai: 'T',
+      so_cho: 4,
+      ma_mdsd: 'M',
+      ma_loaixe: 'L',
+      giodau: '0',
+      giocuoi: '0',
+      ngaydau: '2025-01-01',
+      ngaycuoi: '2025-12-31',
+      thamgia_tndsbb: true,
+    });
     const call = mockPvi.getFee.mock.calls[0][0];
     expect(call.thamgia_laiphu).toBe(false);
     expect(call.MayKeo).toBe(false);

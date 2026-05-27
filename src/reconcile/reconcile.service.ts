@@ -28,7 +28,9 @@ export class ReconcileService {
 
     if (pending.length === 0) return;
 
-    this.logger.log(`Reconcile: checking ${pending.length} pending transaction(s)`);
+    this.logger.log(
+      `Reconcile: checking ${pending.length} pending transaction(s)`,
+    );
 
     for (const tx of pending) {
       try {
@@ -47,17 +49,32 @@ export class ReconcileService {
           });
           this.logger.log(`Reconcile ISSUED: ${tx.maGiaodich}`);
         } else {
-          await this.incrementAttempts(tx.id, tx.reconcileAttempts + 1, env.RECONCILE_MAX_ATTEMPTS, 'No policy yet');
+          await this.incrementAttempts(
+            tx.id,
+            tx.reconcileAttempts + 1,
+            env.RECONCILE_MAX_ATTEMPTS,
+            'No policy yet',
+          );
         }
       } catch (err) {
         const msg = (err as Error).message;
         this.logger.warn(`Reconcile error for ${tx.maGiaodich}: ${msg}`);
-        await this.incrementAttempts(tx.id, tx.reconcileAttempts + 1, env.RECONCILE_MAX_ATTEMPTS, msg);
+        await this.incrementAttempts(
+          tx.id,
+          tx.reconcileAttempts + 1,
+          env.RECONCILE_MAX_ATTEMPTS,
+          msg,
+        );
       }
     }
   }
 
-  private async incrementAttempts(id: string, newAttempts: number, max: number, lastError: string) {
+  private async incrementAttempts(
+    id: string,
+    newAttempts: number,
+    max: number,
+    lastError: string,
+  ) {
     const nextStatus = newAttempts >= max ? 'CALLBACK_TIMEOUT' : 'SUBMITTED_OK';
     await this.prisma.transaction.update({
       where: { id },
@@ -68,12 +85,18 @@ export class ReconcileService {
       },
     });
     if (nextStatus === 'CALLBACK_TIMEOUT') {
-      this.logger.error(`Transaction ${id} hit CALLBACK_TIMEOUT after ${newAttempts} attempts`);
+      this.logger.error(
+        `Transaction ${id} hit CALLBACK_TIMEOUT after ${newAttempts} attempts`,
+      );
     }
   }
 
-  async reconcileOne(maGiaodich: string): Promise<{ status: string; policyNumber?: string | null }> {
-    const tx = await this.prisma.transaction.findUniqueOrThrow({ where: { maGiaodich } });
+  async reconcileOne(
+    maGiaodich: string,
+  ): Promise<{ status: string; policyNumber?: string | null }> {
+    const tx = await this.prisma.transaction.findUniqueOrThrow({
+      where: { maGiaodich },
+    });
     const result = await this.pvi.getPolicy(maGiaodich);
 
     if (result.PolicyNumber) {

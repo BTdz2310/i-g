@@ -88,4 +88,4 @@ async function bootstrap() {
   // Signal PM2 rằng app đã sẵn sàng nhận traffic (dùng với wait_ready: true)
   if (process.send) process.send('ready');
 }
-bootstrap();
+void bootstrap();

@@ -20,7 +20,12 @@ beforeAll(() => {
   });
 });
 
-const TX = { id: 'tx-1', maGiaodich: 'gd-001', reconcileAttempts: 0, status: 'SUBMITTED_OK' };
+const TX = {
+  id: 'tx-1',
+  maGiaodich: 'gd-001',
+  reconcileAttempts: 0,
+  status: 'SUBMITTED_OK',
+};
 
 const makePrisma = () => ({
   transaction: {
@@ -50,11 +55,20 @@ describe('ReconcileService', () => {
 
     it('updates to ISSUED when policy found', async () => {
       prisma.transaction.findMany.mockResolvedValue([TX]);
-      mockPvi.getPolicy.mockResolvedValue({ PolicyNumber: 'POL-001', SerialNumber: 'SN-001', URL: 'https://pdf.com' });
+      mockPvi.getPolicy.mockResolvedValue({
+        PolicyNumber: 'POL-001',
+        SerialNumber: 'SN-001',
+        URL: 'https://pdf.com',
+      });
       const svc = new ReconcileService(prisma as any, mockPvi);
       await svc.reconcile();
       expect(prisma.transaction.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'ISSUED', policyNumber: 'POL-001' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'ISSUED',
+            policyNumber: 'POL-001',
+          }),
+        }),
       );
     });
 
@@ -64,7 +78,12 @@ describe('ReconcileService', () => {
       const svc = new ReconcileService(prisma as any, mockPvi);
       await svc.reconcile();
       expect(prisma.transaction.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'SUBMITTED_OK', reconcileAttempts: 1 }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'SUBMITTED_OK',
+            reconcileAttempts: 1,
+          }),
+        }),
       );
     });
 
@@ -75,7 +94,9 @@ describe('ReconcileService', () => {
       const svc = new ReconcileService(prisma as any, mockPvi);
       await svc.reconcile();
       expect(prisma.transaction.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'CALLBACK_TIMEOUT' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'CALLBACK_TIMEOUT' }),
+        }),
       );
     });
 
@@ -85,7 +106,9 @@ describe('ReconcileService', () => {
       const svc = new ReconcileService(prisma as any, mockPvi);
       await svc.reconcile();
       expect(prisma.transaction.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ lastError: 'PVI down' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ lastError: 'PVI down' }),
+        }),
       );
     });
   });
@@ -93,7 +116,11 @@ describe('ReconcileService', () => {
   describe('reconcileOne', () => {
     it('returns ISSUED when policy found', async () => {
       prisma.transaction.findUniqueOrThrow.mockResolvedValue(TX);
-      mockPvi.getPolicy.mockResolvedValue({ PolicyNumber: 'POL-001', SerialNumber: 'SN-001', URL: 'https://pdf.com' });
+      mockPvi.getPolicy.mockResolvedValue({
+        PolicyNumber: 'POL-001',
+        SerialNumber: 'SN-001',
+        URL: 'https://pdf.com',
+      });
       const svc = new ReconcileService(prisma as any, mockPvi);
       const result = await svc.reconcileOne('gd-001');
       expect(result.status).toBe('ISSUED');
@@ -101,7 +128,10 @@ describe('ReconcileService', () => {
     });
 
     it('returns current status when no policy', async () => {
-      prisma.transaction.findUniqueOrThrow.mockResolvedValue({ ...TX, policyNumber: null });
+      prisma.transaction.findUniqueOrThrow.mockResolvedValue({
+        ...TX,
+        policyNumber: null,
+      });
       mockPvi.getPolicy.mockResolvedValue({ PolicyNumber: null });
       const svc = new ReconcileService(prisma as any, mockPvi);
       const result = await svc.reconcileOne('gd-001');

@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreatePartnerDto {
   @ApiProperty({ example: 'Dai ly ABC' })
@@ -12,7 +20,10 @@ export class CreatePartnerDto {
   @IsString()
   clientId?: string;
 
-  @ApiPropertyOptional({ example: 600, description: 'Requests per minute (0 = unlimited)' })
+  @ApiPropertyOptional({
+    example: 600,
+    description: 'Requests per minute (0 = unlimited)',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)

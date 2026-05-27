@@ -38,7 +38,10 @@ describe('AdminAuthGuard', () => {
   });
 
   it('returns true and attaches admin on valid token', () => {
-    mockJwtService.verify.mockReturnValue({ adminId: 'uuid-1', username: 'admin' });
+    mockJwtService.verify.mockReturnValue({
+      adminId: 'uuid-1',
+      username: 'admin',
+    });
     const req: any = { headers: { authorization: 'Bearer valid-token' } };
     const ctx = { switchToHttp: () => ({ getRequest: () => req }) };
     const result = guard.canActivate(ctx as any);

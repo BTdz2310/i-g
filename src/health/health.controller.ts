@@ -43,12 +43,12 @@ export class HealthController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async ready(): Promise<HealthReport> {
-    const [db, cache] = await Promise.all([
-      this.checkDb(),
-      this.checkRedis(),
-    ]);
+    const [db, cache] = await Promise.all([this.checkDb(), this.checkRedis()]);
 
-    const checks: Record<string, DependencyState> = { database: db, redis: cache };
+    const checks: Record<string, DependencyState> = {
+      database: db,
+      redis: cache,
+    };
     const healthy = db === 'up' && cache === 'up';
 
     const report: HealthReport = {

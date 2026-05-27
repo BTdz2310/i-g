@@ -35,7 +35,9 @@ describe('AdminService', () => {
       const svc = new AdminService(prisma as any);
       const result = await svc.findByUsername('admin');
       expect(result).toEqual({ id: '1', username: 'admin' });
-      expect(prisma.admin.findUnique).toHaveBeenCalledWith({ where: { username: 'admin' } });
+      expect(prisma.admin.findUnique).toHaveBeenCalledWith({
+        where: { username: 'admin' },
+      });
     });
   });
 
@@ -69,7 +71,11 @@ describe('AdminService', () => {
     });
 
     it('skips seed when admin already exists', async () => {
-      validateEnv({ ...BASE_ENV, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'password123' });
+      validateEnv({
+        ...BASE_ENV,
+        ADMIN_USERNAME: 'admin',
+        ADMIN_PASSWORD: 'password123',
+      });
       const prisma = makePrisma();
       prisma.admin.findUnique.mockResolvedValue({ id: '1', username: 'admin' });
       const svc = new AdminService(prisma as any);
@@ -78,7 +84,11 @@ describe('AdminService', () => {
     });
 
     it('creates admin when not exists', async () => {
-      validateEnv({ ...BASE_ENV, ADMIN_USERNAME: 'newadmin', ADMIN_PASSWORD: 'securepass1' });
+      validateEnv({
+        ...BASE_ENV,
+        ADMIN_USERNAME: 'newadmin',
+        ADMIN_PASSWORD: 'securepass1',
+      });
       const prisma = makePrisma();
       prisma.admin.findUnique.mockResolvedValue(null);
       prisma.admin.create.mockResolvedValue({ id: '2', username: 'newadmin' });
@@ -91,7 +101,11 @@ describe('AdminService', () => {
     });
 
     it('ignores P2002 unique constraint error on race condition', async () => {
-      validateEnv({ ...BASE_ENV, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'securepass1' });
+      validateEnv({
+        ...BASE_ENV,
+        ADMIN_USERNAME: 'admin',
+        ADMIN_PASSWORD: 'securepass1',
+      });
       const prisma = makePrisma();
       prisma.admin.findUnique.mockResolvedValue(null);
       prisma.admin.create.mockRejectedValue({ code: 'P2002' });
@@ -100,7 +114,11 @@ describe('AdminService', () => {
     });
 
     it('rethrows non-P2002 errors', async () => {
-      validateEnv({ ...BASE_ENV, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'securepass1' });
+      validateEnv({
+        ...BASE_ENV,
+        ADMIN_USERNAME: 'admin',
+        ADMIN_PASSWORD: 'securepass1',
+      });
       const prisma = makePrisma();
       prisma.admin.findUnique.mockResolvedValue(null);
       prisma.admin.create.mockRejectedValue(new Error('DB connection lost'));

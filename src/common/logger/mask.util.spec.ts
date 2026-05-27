@@ -40,7 +40,10 @@ describe('maskSensitive', () => {
   });
 
   it('masks case-insensitively', () => {
-    const result = maskSensitive({ TOKEN: 'abc', Secret: 'xyz' }) as Record<string, unknown>;
+    const result = maskSensitive({ TOKEN: 'abc', Secret: 'xyz' }) as Record<
+      string,
+      unknown
+    >;
     expect(result.TOKEN).toBe('***');
     expect(result.Secret).toBe('***');
   });

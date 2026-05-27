@@ -32,16 +32,21 @@ describe('validateEnv', () => {
   });
 
   it('throws on missing required field', () => {
-    const { PVI_BASE_URL: _, ...rest } = VALID_ENV;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { PVI_BASE_URL: _url, ...rest } = VALID_ENV;
     expect(() => validateEnv(rest)).toThrow('Invalid environment variables');
   });
 
   it('throws on invalid URL', () => {
-    expect(() => validateEnv({ ...VALID_ENV, PVI_BASE_URL: 'not-a-url' })).toThrow();
+    expect(() =>
+      validateEnv({ ...VALID_ENV, PVI_BASE_URL: 'not-a-url' }),
+    ).toThrow();
   });
 
   it('throws when ADMIN_JWT_SECRET is shorter than 32 chars', () => {
-    expect(() => validateEnv({ ...VALID_ENV, ADMIN_JWT_SECRET: 'short' })).toThrow();
+    expect(() =>
+      validateEnv({ ...VALID_ENV, ADMIN_JWT_SECRET: 'short' }),
+    ).toThrow();
   });
 
   it('accepts ADMIN_USERNAME and ADMIN_PASSWORD when provided', () => {
@@ -56,7 +61,11 @@ describe('validateEnv', () => {
 
   it('rejects ADMIN_PASSWORD shorter than 8 chars', () => {
     expect(() =>
-      validateEnv({ ...VALID_ENV, ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'short' }),
+      validateEnv({
+        ...VALID_ENV,
+        ADMIN_USERNAME: 'admin',
+        ADMIN_PASSWORD: 'short',
+      }),
     ).toThrow();
   });
 });

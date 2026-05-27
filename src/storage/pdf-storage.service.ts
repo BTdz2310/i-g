@@ -5,7 +5,6 @@ import { promises as fs, createReadStream } from 'fs';
 import { join, resolve } from 'path';
 import { Readable } from 'stream';
 import { PrismaService } from '../prisma/prisma.service';
-import { getEnv } from '../config/env';
 
 const FETCH_TIMEOUT_MS = 30_000;
 
@@ -33,7 +32,7 @@ export class PdfStorageService {
    * lazy fetch khi đối tác thực sự GET endpoint.
    */
   publicUrl(maGiaodich: string): string {
-    const base = (getEnv() as any).PUBLIC_BASE_URL || '';
+    const base = process.env['PUBLIC_BASE_URL'] ?? '';
     return `${base.replace(/\/$/, '')}/files/policies/${maGiaodich}.pdf`;
   }
 
@@ -41,7 +40,9 @@ export class PdfStorageService {
    * Trả về readable stream của file PDF. Nếu chưa cache thì fetch từ PVI trước.
    * Throw NotFoundException nếu không có pdfUrl gốc hoặc fetch thất bại.
    */
-  async getOrFetch(maGiaodich: string): Promise<{ stream: Readable; size: number }> {
+  async getOrFetch(
+    maGiaodich: string,
+  ): Promise<{ stream: Readable; size: number }> {
     const filePath = join(this.storageDir, `${maGiaodich}.pdf`);
 
     try {

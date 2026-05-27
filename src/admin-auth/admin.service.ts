@@ -13,7 +13,7 @@ export class AdminService implements OnModuleInit {
     await this.seedFromEnv();
   }
 
-  async findByUsername(username: string) {
+  findByUsername(username: string) {
     return this.prisma.admin.findUnique({ where: { username } });
   }
 
@@ -40,8 +40,8 @@ export class AdminService implements OnModuleInit {
         data: { username: env.ADMIN_USERNAME, passwordHash },
       });
       this.logger.log(`Seeded initial admin: ${env.ADMIN_USERNAME}`);
-    } catch (e: any) {
-      if (e?.code === 'P2002') return;
+    } catch (e: unknown) {
+      if ((e as { code?: string })?.code === 'P2002') return;
       throw e;
     }
   }

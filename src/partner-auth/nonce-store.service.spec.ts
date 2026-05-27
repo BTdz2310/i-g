@@ -8,14 +8,24 @@ describe('NonceStoreService', () => {
   it('returns true when Redis returns OK (first use)', async () => {
     const client = makeClient('OK');
     const svc = new NonceStoreService({ getClient: () => client } as any);
-    const result = await svc.checkAndSet('client1', 'nonce-abc', 1700000000, 300);
+    const result = await svc.checkAndSet(
+      'client1',
+      'nonce-abc',
+      1700000000,
+      300,
+    );
     expect(result).toBe(true);
   });
 
   it('returns false when Redis returns null (replay)', async () => {
     const client = makeClient(null);
     const svc = new NonceStoreService({ getClient: () => client } as any);
-    const result = await svc.checkAndSet('client1', 'nonce-abc', 1700000000, 300);
+    const result = await svc.checkAndSet(
+      'client1',
+      'nonce-abc',
+      1700000000,
+      300,
+    );
     expect(result).toBe(false);
   });
 

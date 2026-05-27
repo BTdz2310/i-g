@@ -38,9 +38,7 @@ export function maskSensitive(obj: unknown): unknown {
 
   const result: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-    result[k] = SENSITIVE_KEYS.has(k.toLowerCase())
-      ? '***'
-      : maskSensitive(v);
+    result[k] = SENSITIVE_KEYS.has(k.toLowerCase()) ? '***' : maskSensitive(v);
   }
   return result;
 }

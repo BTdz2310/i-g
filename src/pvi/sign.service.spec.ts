@@ -1,6 +1,23 @@
+import md5 from 'md5';
 import { SignService } from './sign.service';
+import { PviConfig, PviEndpoints } from '../config/pvi.config';
 
-const cfg = { key: 'test-pvi-key', cpId: 'cp001', baseUrl: '', endpoints: {}, timeoutMs: 5000 } as any;
+const ep: PviEndpoints = {
+  getFee: '',
+  createOrder: '',
+  category: '',
+  getVehicleType: '',
+  getPolicy: '',
+  getFeeMoto: '',
+  createOrderMoto: '',
+};
+const cfg = {
+  key: 'test-pvi-key',
+  cpId: 'cp001',
+  baseUrl: '',
+  ep,
+  timeoutMs: 5000,
+} as PviConfig;
 
 describe('SignService', () => {
   let svc: SignService;
@@ -11,7 +28,9 @@ describe('SignService', () => {
 
   describe('forGetFee', () => {
     it('returns 32-char hex string', () => {
-      expect(svc.forGetFee({ ma_trongtai: 'TT01', so_cho: 5 })).toHaveLength(32);
+      expect(svc.forGetFee({ ma_trongtai: 'TT01', so_cho: 5 })).toHaveLength(
+        32,
+      );
     });
 
     it('is deterministic', () => {
@@ -39,7 +58,12 @@ describe('SignService', () => {
   });
 
   describe('forCategory', () => {
-    const p = { ten_dmuc: 'cat', ma_user: 'u1', ma_donvi: 'd1', giatri_chon: 'g1' };
+    const p = {
+      ten_dmuc: 'cat',
+      ma_user: 'u1',
+      ma_donvi: 'd1',
+      giatri_chon: 'g1',
+    };
     it('returns 32-char hex', () => {
       expect(svc.forCategory(p)).toHaveLength(32);
     });
@@ -63,14 +87,15 @@ describe('SignService', () => {
 
   describe('verifyCallback', () => {
     it('returns true for correct signature', () => {
-      const md5Lib = require('md5');
       const key = cfg.key;
       const RequestId = 'REQ-001';
       const PolicyNumber = 'POL-123';
       const URL = 'https://callback.example.com/notify';
-      const Sign = md5Lib(key + RequestId + PolicyNumber + URL);
+      const Sign = md5(key + RequestId + PolicyNumber + URL);
 
-      expect(svc.verifyCallback({ RequestId, PolicyNumber, URL, Sign })).toBe(true);
+      expect(svc.verifyCallback({ RequestId, PolicyNumber, URL, Sign })).toBe(
+        true,
+      );
     });
 
     it('returns false for wrong signature', () => {
@@ -85,8 +110,7 @@ describe('SignService', () => {
     });
 
     it('returns false for tampered data', () => {
-      const md5Lib = require('md5');
-      const Sign = md5Lib(cfg.key + 'REQ-001' + 'POL-123' + 'https://real.com');
+      const Sign = md5(cfg.key + 'REQ-001' + 'POL-123' + 'https://real.com');
       expect(
         svc.verifyCallback({
           RequestId: 'REQ-001',

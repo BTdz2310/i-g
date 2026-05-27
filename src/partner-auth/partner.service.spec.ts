@@ -38,13 +38,23 @@ describe('PartnerService', () => {
     });
 
     it('returns null when partner is INACTIVE', async () => {
-      prisma.partner.findUnique.mockResolvedValue({ id: 'p1', status: 'INACTIVE' });
+      prisma.partner.findUnique.mockResolvedValue({
+        id: 'p1',
+        status: 'INACTIVE',
+      });
       const svc = new PartnerService(prisma as any, secretService as any);
       expect(await svc.findActivePartnerByClientId('cid')).toBeNull();
     });
 
     it('returns partner when ACTIVE', async () => {
-      const partner = { id: 'p1', status: 'ACTIVE', clientId: 'cid', name: 'Test', rateLimit: 100, allowedIps: [] };
+      const partner = {
+        id: 'p1',
+        status: 'ACTIVE',
+        clientId: 'cid',
+        name: 'Test',
+        rateLimit: 100,
+        allowedIps: [],
+      };
       prisma.partner.findUnique.mockResolvedValue(partner);
       const svc = new PartnerService(prisma as any, secretService as any);
       const result = await svc.findActivePartnerByClientId('cid');
@@ -60,7 +70,9 @@ describe('PartnerService', () => {
     });
 
     it('decrypts and returns secret', async () => {
-      prisma.partnerSecret.findFirst.mockResolvedValue({ secretEnc: 'enc-value' });
+      prisma.partnerSecret.findFirst.mockResolvedValue({
+        secretEnc: 'enc-value',
+      });
       const svc = new PartnerService(prisma as any, secretService as any);
       const result = await svc.getActiveSecret('p1', 'kid');
       expect(result).toBe('decrypted-secret');
@@ -70,7 +82,14 @@ describe('PartnerService', () => {
 
   describe('createPartner', () => {
     it('creates partner with generated credentials', async () => {
-      const partner = { id: 'p1', name: 'Test', clientId: 'cid', status: 'ACTIVE', rateLimit: 0, allowedIps: [] };
+      const partner = {
+        id: 'p1',
+        name: 'Test',
+        clientId: 'cid',
+        status: 'ACTIVE',
+        rateLimit: 0,
+        allowedIps: [],
+      };
       prisma.partner.create.mockResolvedValue(partner);
       const svc = new PartnerService(prisma as any, secretService as any);
       const result = await svc.createPartner({ name: 'Test' });

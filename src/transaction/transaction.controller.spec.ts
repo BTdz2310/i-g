@@ -11,7 +11,7 @@ const makePrisma = () => ({
   },
 });
 
-const makeReq = (partnerId: string) => ({ partner: { id: partnerId } } as any);
+const makeReq = (partnerId: string) => ({ partner: { id: partnerId } }) as any;
 
 describe('TransactionController', () => {
   let prisma: ReturnType<typeof makePrisma>;
@@ -49,7 +49,13 @@ describe('TransactionController', () => {
 
     it('adds date range filter when from/to provided', async () => {
       const ctrl = new TransactionController(prisma as any, mockReconcile);
-      await ctrl.list(makeReq('p1'), undefined, undefined, '2025-01-01', '2025-12-31');
+      await ctrl.list(
+        makeReq('p1'),
+        undefined,
+        undefined,
+        '2025-01-01',
+        '2025-12-31',
+      );
       const where = prisma.transaction.findMany.mock.calls[0][0].where;
       expect(where.createdAt).toBeDefined();
       expect(where.createdAt.gte).toBeInstanceOf(Date);
@@ -71,13 +77,20 @@ describe('TransactionController', () => {
     it('throws NotFoundException when tx not found', async () => {
       prisma.transaction.findUnique.mockResolvedValue(null);
       const ctrl = new TransactionController(prisma as any, mockReconcile);
-      await expect(ctrl.getOne(makeReq('p1'), 'unknown')).rejects.toThrow(NotFoundException);
+      await expect(ctrl.getOne(makeReq('p1'), 'unknown')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when partnerId mismatch', async () => {
-      prisma.transaction.findUnique.mockResolvedValue({ id: 'tx-1', partnerId: 'other' });
+      prisma.transaction.findUnique.mockResolvedValue({
+        id: 'tx-1',
+        partnerId: 'other',
+      });
       const ctrl = new TransactionController(prisma as any, mockReconcile);
-      await expect(ctrl.getOne(makeReq('p1'), 'tx-1')).rejects.toThrow(NotFoundException);
+      await expect(ctrl.getOne(makeReq('p1'), 'tx-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -85,7 +98,10 @@ describe('TransactionController', () => {
     it('triggers reconcile for partner-owned transaction', async () => {
       const tx = { id: 'tx-1', maGiaodich: 'gd-001', partnerId: 'p1' };
       prisma.transaction.findUnique.mockResolvedValue(tx);
-      mockReconcile.reconcileOne.mockResolvedValue({ status: 'ISSUED', policyNumber: 'POL-001' });
+      mockReconcile.reconcileOne.mockResolvedValue({
+        status: 'ISSUED',
+        policyNumber: 'POL-001',
+      });
       const ctrl = new TransactionController(prisma as any, mockReconcile);
       const result = await ctrl.reconcileOne(makeReq('p1'), 'tx-1');
       expect(result.status).toBe('ISSUED');
@@ -95,7 +111,9 @@ describe('TransactionController', () => {
     it('throws NotFoundException when tx not found', async () => {
       prisma.transaction.findUnique.mockResolvedValue(null);
       const ctrl = new TransactionController(prisma as any, mockReconcile);
-      await expect(ctrl.reconcileOne(makeReq('p1'), 'unknown')).rejects.toThrow(NotFoundException);
+      await expect(ctrl.reconcileOne(makeReq('p1'), 'unknown')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

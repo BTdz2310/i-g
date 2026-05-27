@@ -129,8 +129,12 @@ export class PartnerService {
       where: { id: partnerId },
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
-        ...(input.rateLimit !== undefined ? { rateLimit: input.rateLimit } : {}),
-        ...(input.allowedIps !== undefined ? { allowedIps: input.allowedIps } : {}),
+        ...(input.rateLimit !== undefined
+          ? { rateLimit: input.rateLimit }
+          : {}),
+        ...(input.allowedIps !== undefined
+          ? { allowedIps: input.allowedIps }
+          : {}),
         ...(input.status !== undefined ? { status: input.status } : {}),
       },
       select: {
@@ -144,7 +148,7 @@ export class PartnerService {
     });
   }
 
-  async updateStatus(partnerId: string, status: PartnerStatus) {
+  updateStatus(partnerId: string, status: PartnerStatus) {
     return this.prisma.partner.update({
       where: { id: partnerId },
       data: { status },

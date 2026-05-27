@@ -54,7 +54,9 @@ describe('AdminJwtService', () => {
     it('throws on tampered payload', () => {
       const { token } = svc.sign({ adminId: 'uuid-1', username: 'admin' });
       const [header, , sig] = token.split('.');
-      const fakePayload = Buffer.from(JSON.stringify({ adminId: 'hacker', username: 'evil' })).toString('base64url');
+      const fakePayload = Buffer.from(
+        JSON.stringify({ adminId: 'hacker', username: 'evil' }),
+      ).toString('base64url');
       expect(() => svc.verify(`${header}.${fakePayload}.${sig}`)).toThrow();
     });
   });

@@ -14,7 +14,10 @@ export class UpdatePartnerDto {
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ example: 600, description: 'Requests per minute (0 = unlimited)' })
+  @ApiPropertyOptional({
+    example: 600,
+    description: 'Requests per minute (0 = unlimited)',
+  })
   @IsOptional()
   @IsInt()
   @Min(0)

@@ -9,7 +9,10 @@ export class VehicleTypeQueryDto {
   @Type(() => Number)
   SoChoNgoi!: number;
 
-  @ApiProperty({ description: 'Mã mục đích sử dụng (lấy từ MDSD_AUTO)', example: '1' })
+  @ApiProperty({
+    description: 'Mã mục đích sử dụng (lấy từ MDSD_AUTO)',
+    example: '1',
+  })
   @IsIn(['1', '2', '3'])
   Ma_MDSD!: string;
 

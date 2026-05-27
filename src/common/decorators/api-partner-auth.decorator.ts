@@ -22,6 +22,10 @@ const HEADER_DESCRIPTIONS: Record<string, string> = {
 export const ApiPartnerAuth = () =>
   applyDecorators(
     ...PARTNER_AUTH_SCHEMES.map((name) =>
-      ApiHeader({ name, description: HEADER_DESCRIPTIONS[name], required: true }),
+      ApiHeader({
+        name,
+        description: HEADER_DESCRIPTIONS[name],
+        required: true,
+      }),
     ),
   );

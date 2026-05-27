@@ -12,7 +12,10 @@ import { CategoryInput, CategoryItem } from './dto/category.dto';
 import { VehicleTypeInput, VehicleTypeItem } from './dto/vehicle-type.dto';
 import { GetPolicyResult } from './dto/get-policy.dto';
 import { FeeMotoInput, FeeMotoResult } from './dto/fee-moto.dto';
-import { CreateMotoOrderInput, CreateMotoOrderResult } from './dto/create-order-moto.dto';
+import {
+  CreateMotoOrderInput,
+  CreateMotoOrderResult,
+} from './dto/create-order-moto.dto';
 
 @Injectable()
 export class PviClient {
@@ -29,7 +32,10 @@ export class PviClient {
     const body = {
       ...input,
       CpId: this.cfg.cpId,
-      Sign: this.sign.forGetFee({ ma_trongtai: input.ma_trongtai, so_cho: input.so_cho }),
+      Sign: this.sign.forGetFee({
+        ma_trongtai: input.ma_trongtai,
+        so_cho: input.so_cho,
+      }),
     };
     const raw = await this.call(this.cfg.ep.getFee, body);
     return raw as FeeResult;
@@ -41,7 +47,11 @@ export class PviClient {
       CpId: this.cfg.cpId,
       Sign: this.sign.forCreateOrder({ ma_giaodich: input.ma_giaodich }),
     };
-    const raw = await this.call(this.cfg.ep.createOrder, body, input.ma_giaodich);
+    const raw = await this.call(
+      this.cfg.ep.createOrder,
+      body,
+      input.ma_giaodich,
+    );
     return raw as CreateOrderResult;
   }
 
@@ -51,7 +61,9 @@ export class PviClient {
       CpId: this.cfg.cpId,
       Sign: this.sign.forCategory(input),
     };
-    const raw = await this.call(this.cfg.ep.category, body) as { Data: CategoryItem[] };
+    const raw = (await this.call(this.cfg.ep.category, body)) as {
+      Data: CategoryItem[];
+    };
     return raw.Data ?? [];
   }
 
@@ -61,7 +73,9 @@ export class PviClient {
       CpId: this.cfg.cpId,
       Sign: this.sign.forGetVehicleType(input),
     };
-    const raw = await this.call(this.cfg.ep.getVehicleType, body) as { Data: VehicleTypeItem[] };
+    const raw = (await this.call(this.cfg.ep.getVehicleType, body)) as {
+      Data: VehicleTypeItem[];
+    };
     return raw.Data ?? [];
   }
 
@@ -79,7 +93,9 @@ export class PviClient {
     return raw as FeeMotoResult;
   }
 
-  async createMotoOrder(input: CreateMotoOrderInput): Promise<CreateMotoOrderResult> {
+  async createMotoOrder(
+    input: CreateMotoOrderInput,
+  ): Promise<CreateMotoOrderResult> {
     const body = {
       ...input,
       CpId: this.cfg.cpId,
@@ -92,7 +108,11 @@ export class PviClient {
         nam_sanxuat: input.nam_sanxuat,
       }),
     };
-    const raw = await this.call(this.cfg.ep.createOrderMoto, body, input.ma_giaodich);
+    const raw = await this.call(
+      this.cfg.ep.createOrderMoto,
+      body,
+      input.ma_giaodich,
+    );
     return raw as CreateMotoOrderResult;
   }
 
@@ -106,7 +126,11 @@ export class PviClient {
     return raw as GetPolicyResult;
   }
 
-  private async call(endpoint: string, body: unknown, maGiaodich?: string): Promise<unknown> {
+  private async call(
+    endpoint: string,
+    body: unknown,
+    maGiaodich?: string,
+  ): Promise<unknown> {
     const url = this.cfg.baseUrl + endpoint;
     const start = Date.now();
     let statusCode = 599;
@@ -121,7 +145,10 @@ export class PviClient {
       response = res.data;
 
       if (res.data?.Status !== '00') {
-        throw new PviBusinessError(res.data?.Status ?? 'UNKNOWN', res.data?.Message ?? '');
+        throw new PviBusinessError(
+          res.data?.Status ?? 'UNKNOWN',
+          res.data?.Message ?? '',
+        );
       }
       return res.data;
     } catch (err) {
@@ -134,15 +161,17 @@ export class PviClient {
       throw err;
     } finally {
       const durationMs = Date.now() - start;
-      await this.audit.logOut(
-        endpoint,
-        maskSensitive(body),
-        maskSensitive(response),
-        statusCode,
-        durationMs,
-        maGiaodich,
-        errorMsg,
-      ).catch((e) => this.logger.error('Failed to write audit log', e));
+      await this.audit
+        .logOut(
+          endpoint,
+          maskSensitive(body),
+          maskSensitive(response),
+          statusCode,
+          durationMs,
+          maGiaodich,
+          errorMsg,
+        )
+        .catch((e) => this.logger.error('Failed to write audit log', e));
     }
   }
 }

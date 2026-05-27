@@ -15,7 +15,8 @@ export class QuoteMotoController {
   @Post()
   @ApiOperation({
     summary: 'Tính phí TNDS xe máy',
-    description: 'Lấy loai_xe từ /api/pvi/catalog với ten_dmuc=LOAIXEMOTOR, parent_value="1".',
+    description:
+      'Lấy loai_xe từ /api/pvi/catalog với ten_dmuc=LOAIXEMOTOR, parent_value="1".',
   })
   @ApiBody({ type: QuoteMotoDto })
   @ApiOkResponse({ type: QuoteMotoResultDto })

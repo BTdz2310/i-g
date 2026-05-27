@@ -39,7 +39,10 @@ const SECRET = 'test-secret-value';
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 
-function buildRequest(headerOverrides: Record<string, string> = {}, reqOverrides: Record<string, any> = {}): Record<string, any> {
+function buildRequest(
+  headerOverrides: Record<string, string> = {},
+  reqOverrides: Record<string, any> = {},
+): Record<string, any> {
   const ts = String(nowSec());
   const nonce = 'unique-nonce-' + Date.now();
   const method = 'POST';
@@ -54,7 +57,9 @@ function buildRequest(headerOverrides: Record<string, string> = {}, reqOverrides
     nonce,
     bodyHash,
   });
-  const signature = createHmac('sha256', SECRET).update(canonical).digest('hex');
+  const signature = createHmac('sha256', SECRET)
+    .update(canonical)
+    .digest('hex');
 
   return {
     headers: {
@@ -106,7 +111,10 @@ describe('PartnerAuthGuard', () => {
     const req = buildRequest();
     const result = await guard.canActivate(makeContext(req) as any);
     expect(result).toBe(true);
-    expect(req.partner).toMatchObject({ id: PARTNER.id, clientId: PARTNER.clientId });
+    expect(req.partner).toMatchObject({
+      id: PARTNER.id,
+      clientId: PARTNER.clientId,
+    });
   });
 
   it('throws BadRequest when headers are missing', async () => {
