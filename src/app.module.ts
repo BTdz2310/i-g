@@ -13,7 +13,6 @@ import { ReconcileModule } from './reconcile/reconcile.module';
 import { AdminModule } from './admin/admin.module';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { TransactionModule } from './transaction/transaction.module';
-import { DevModule } from './dev/dev.module';
 import { HealthModule } from './health/health.module';
 import { StorageModule } from './storage/storage.module';
 
@@ -40,7 +39,6 @@ import { StorageModule } from './storage/storage.module';
     AdminModule,
     AdminAuthModule,
     TransactionModule,
-    DevModule,
     HealthModule,
     StorageModule,
   ],
