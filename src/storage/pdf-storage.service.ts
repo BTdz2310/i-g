@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { promises as fs, createReadStream } from 'fs';
@@ -43,6 +43,9 @@ export class PdfStorageService {
   async getOrFetch(
     maGiaodich: string,
   ): Promise<{ stream: Readable; size: number }> {
+    if (!/^[a-zA-Z0-9_-]+$/.test(maGiaodich)) {
+      throw new BadRequestException('Invalid transaction ID: contains invalid characters');
+    }
     const filePath = join(this.storageDir, `${maGiaodich}.pdf`);
 
     try {

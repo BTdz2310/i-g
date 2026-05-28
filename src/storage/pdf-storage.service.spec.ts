@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { of } from 'rxjs';
 import { Readable } from 'stream';
 
@@ -58,6 +58,40 @@ describe('PdfStorageService', () => {
   });
 
   describe('getOrFetch', () => {
+    it('rejects path traversal attempt with ../', async () => {
+      await expect(svc.getOrFetch('../../../etc/passwd')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prisma.transaction.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('rejects path traversal attempt with absolute path', async () => {
+      await expect(svc.getOrFetch('/etc/passwd')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('rejects maGiaodich with special characters', async () => {
+      await expect(svc.getOrFetch('gd-001;rm -rf')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('rejects maGiaodich with spaces', async () => {
+      await expect(svc.getOrFetch('gd 001')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('accepts valid maGiaodich with alphanumeric, dash, underscore', async () => {
+      (fs.stat as jest.Mock).mockResolvedValue({ size: 1234 });
+      const fakeStream = new Readable({ read() {} });
+      (createReadStream as jest.Mock).mockReturnValue(fakeStream);
+
+      const result = await svc.getOrFetch('gd-001_ABC');
+      expect(result.size).toBe(1234);
+    });
+
     it('returns cached file when it exists and size > 0', async () => {
       const fakeStream = new Readable({ read() {} });
       (fs.stat as jest.Mock).mockResolvedValue({ size: 1234 });

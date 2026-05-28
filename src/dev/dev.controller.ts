@@ -98,10 +98,18 @@ async function generate() {
 
     const container = document.getElementById('headers');
     container.innerHTML = headers.map(function (h) {
+      const escapedName = h[0].replace(/[&<>"']/g, function(c) {
+        const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
+        return map[c] || c;
+      });
+      const escapedValue = h[1].replace(/[&<>"']/g, function(c) {
+        const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
+        return map[c] || c;
+      });
       return '<div class="header-row">' +
-        '<span class="header-name">' + h[0] + '</span>' +
-        '<span class="header-value" id="val-' + h[0] + '">' + h[1] + '</span>' +
-        '<button class="copy-btn" onclick="copyVal(\\'' + h[0] + '\\', this)">&nbsp;Copy&nbsp;</button>' +
+        '<span class="header-name">' + escapedName + '</span>' +
+        '<span class="header-value" id="val-' + escapedName + '">' + escapedValue + '</span>' +
+        '<button class="copy-btn" onclick="copyVal(\\'' + escapedName.replace(/'/g, '\\\'') + '\\', this)">&nbsp;Copy&nbsp;</button>' +
         '</div>';
     }).join('');
 

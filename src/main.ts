@@ -21,8 +21,22 @@ async function bootstrap() {
   app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 
   // Security headers: HSTS, X-Frame-Options, X-Content-Type-Options, etc.
-  // CSP tắt vì Scalar (/docs) cần inline scripts.
-  app.use(helmet({ contentSecurityPolicy: false }));
+  if (process.env.NODE_ENV === 'development') {
+    // Dev: allow inline scripts for Scalar /docs
+    app.use(helmet({ contentSecurityPolicy: false }));
+  } else {
+    // Production: strict CSP without unsafe-inline
+    app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+    }));
+  }
 
   app.use(
     json({
@@ -78,8 +92,10 @@ async function bootstrap() {
     },
   };
 
-  const { apiReference } = await import('@scalar/nestjs-api-reference');
-  app.use('/docs', apiReference(scalarOptions));
+  if (process.env.NODE_ENV === 'development') {
+    const { apiReference } = await import('@scalar/nestjs-api-reference');
+    app.use('/docs', apiReference(scalarOptions));
+  }
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);

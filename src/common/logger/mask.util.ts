@@ -38,6 +38,10 @@ export function maskSensitive(obj: unknown): unknown {
 
   const result: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    // Skip dangerous prototype pollution keys
+    if (k === '__proto__' || k === 'constructor' || k === 'prototype') {
+      continue;
+    }
     result[k] = SENSITIVE_KEYS.has(k.toLowerCase()) ? '***' : maskSensitive(v);
   }
   return result;
