@@ -20,23 +20,21 @@ async function bootstrap() {
   // Cần thiết để req.ip trả IP thật của client cho IP allowlist của partner.
   app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 
-  // Security headers: HSTS, X-Frame-Options, X-Content-Type-Options, etc.
-  if (process.env.NODE_ENV === 'development') {
-    // Dev: allow inline scripts for Scalar /docs
-    app.use(helmet({ contentSecurityPolicy: false }));
-  } else {
-    // Production: strict CSP without unsafe-inline
-    app.use(helmet({
+  // Security headers: HSTS, X-Frame-Options, X-Content-Type-Options, CSP.
+  // CSP enforced in all environments to prevent XSS attacks.
+  app.use(
+    helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'"],
           styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
         },
       },
-    }));
-  }
+    }),
+  );
 
   app.use(
     json({

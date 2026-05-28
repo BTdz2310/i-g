@@ -1,8 +1,13 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { promises as fs, createReadStream } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, basename, normalize } from 'path';
 import { Readable } from 'stream';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -44,9 +49,15 @@ export class PdfStorageService {
     maGiaodich: string,
   ): Promise<{ stream: Readable; size: number }> {
     if (!/^[a-zA-Z0-9_-]+$/.test(maGiaodich)) {
-      throw new BadRequestException('Invalid transaction ID: contains invalid characters');
+      throw new BadRequestException(
+        'Invalid transaction ID: contains invalid characters',
+      );
     }
-    const filePath = join(this.storageDir, `${maGiaodich}.pdf`);
+    const safeFilename = basename(`${maGiaodich}.pdf`);
+    const filePath = normalize(join(this.storageDir, safeFilename));
+    if (!filePath.startsWith(this.storageDir)) {
+      throw new BadRequestException('Invalid file path');
+    }
 
     try {
       const stat = await fs.stat(filePath);

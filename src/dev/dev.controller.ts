@@ -98,20 +98,24 @@ async function generate() {
 
     const container = document.getElementById('headers');
     container.innerHTML = headers.map(function (h) {
-      const escapedName = h[0].replace(/[&<>"']/g, function(c) {
-        const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
-        return map[c] || c;
-      });
-      const escapedValue = h[1].replace(/[&<>"']/g, function(c) {
-        const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
-        return map[c] || c;
-      });
-      return '<div class="header-row">' +
-        '<span class="header-name">' + escapedName + '</span>' +
-        '<span class="header-value" id="val-' + escapedName + '">' + escapedValue + '</span>' +
-        '<button class="copy-btn" onclick="copyVal(\\'' + escapedName.replace(/'/g, '\\\'') + '\\', this)">&nbsp;Copy&nbsp;</button>' +
-        '</div>';
-    }).join('');
+      const nameEl = document.createElement('span');
+      nameEl.className = 'header-name';
+      nameEl.textContent = h[0];
+      const valEl = document.createElement('span');
+      valEl.className = 'header-value';
+      valEl.id = 'val-' + h[0];
+      valEl.textContent = h[1];
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = ' Copy ';
+      btn.onclick = function() { copyVal(h[0], this); };
+      const row = document.createElement('div');
+      row.className = 'header-row';
+      row.appendChild(nameEl);
+      row.appendChild(valEl);
+      row.appendChild(btn);
+      return row;
+    }).forEach(function(el) { container.appendChild(el); });
 
     document.getElementById('result').style.display = 'block';
   } catch (e) {
