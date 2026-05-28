@@ -36,13 +36,20 @@ export function maskSensitive(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(maskSensitive);
 
-  const result: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-    // Skip dangerous prototype pollution keys
-    if (k === '__proto__' || k === 'constructor' || k === 'prototype') {
+  const result: Record<string, unknown> = Object.create(null);
+
+  for (const [k, v] of Object.entries(obj)) {
+    if (
+      k === '__proto__' ||
+      k === 'constructor' ||
+      k === 'prototype'
+    ) {
       continue;
     }
-    result[k] = SENSITIVE_KEYS.has(k.toLowerCase()) ? '***' : maskSensitive(v);
+
+    result[k] = SENSITIVE_KEYS.has(k.toLowerCase())
+      ? '***'
+      : maskSensitive(v);
   }
   return result;
 }
