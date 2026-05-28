@@ -1,7 +1,32 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { createHash, createHmac, randomUUID } from 'crypto';
 import { SkipThrottle } from '@nestjs/throttler';
+
+function validateSignInput(input: unknown): asserts input is SignBody {
+  if (typeof input !== 'object' || input === null) {
+    throw new BadRequestException('Invalid input');
+  }
+  const obj = input as Record<string, unknown>;
+  if (typeof obj.secret !== 'string' || obj.secret.length === 0) {
+    throw new BadRequestException('Invalid secret');
+  }
+  if (typeof obj.clientId !== 'string' || obj.clientId.length === 0) {
+    throw new BadRequestException('Invalid clientId');
+  }
+  if (typeof obj.keyId !== 'string' || obj.keyId.length === 0) {
+    throw new BadRequestException('Invalid keyId');
+  }
+  if (typeof obj.method !== 'string' || obj.method.length === 0) {
+    throw new BadRequestException('Invalid method');
+  }
+  if (typeof obj.path !== 'string' || obj.path.length === 0) {
+    throw new BadRequestException('Invalid path');
+  }
+  if (typeof obj.body !== 'string') {
+    throw new BadRequestException('Invalid body');
+  }
+}
 
 const HTML = `<!DOCTYPE html>
 <html lang="vi">
@@ -171,6 +196,7 @@ export class DevController {
 
   @Post('sign')
   sign(@Body() input: SignBody) {
+    validateSignInput(input);
     const timestamp = String(Math.floor(Date.now() / 1000));
     const nonce = randomUUID();
     const bodyHash = createHash('sha256')
