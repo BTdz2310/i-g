@@ -32,24 +32,33 @@ const SENSITIVE_KEYS = new Set(
   ].map((k) => k.toLowerCase()),
 );
 
+function isSafePropertyKey(key: string): boolean {
+  return (
+    key !== '__proto__' &&
+    key !== 'constructor' &&
+    key !== 'prototype' &&
+    key !== 'toString' &&
+    key !== 'valueOf' &&
+    key !== 'hasOwnProperty'
+  );
+}
+
 export function maskSensitive(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(maskSensitive);
 
-  const result: Record<string, unknown> = Object.create(null);
+  const result = new Map<string, unknown>();
 
   for (const [k, v] of Object.entries(obj)) {
-    if (
-      k === '__proto__' ||
-      k === 'constructor' ||
-      k === 'prototype'
-    ) {
+    if (!isSafePropertyKey(k)) {
       continue;
     }
 
-    result[k] = SENSITIVE_KEYS.has(k.toLowerCase())
-      ? '***'
-      : maskSensitive(v);
+    result.set(
+      k,
+      SENSITIVE_KEYS.has(k.toLowerCase()) ? '***' : maskSensitive(v),
+    );
   }
-  return result;
+
+  return Object.fromEntries(result);
 }
