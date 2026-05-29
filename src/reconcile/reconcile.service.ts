@@ -15,6 +15,12 @@ export class ReconcileService {
 
   @Cron('* * * * *') // runs every minute; actual gate inside
   async reconcile() {
+    // Trong pm2 cluster, cron chạy trên MỌI instance -> đối soát trùng (gọi
+    // PVI nhiều lần, reconcileAttempts tăng sai). Chỉ cho instance 0 chạy.
+    // NODE_APP_INSTANCE do pm2 cluster gán (0,1,2..); undefined khi chạy đơn lẻ.
+    const appInstance = process.env.NODE_APP_INSTANCE;
+    if (appInstance !== undefined && appInstance !== '0') return;
+
     const env = getEnv();
     const graceCutoff = new Date(Date.now() - env.RECONCILE_GRACE_MIN * 60_000);
 

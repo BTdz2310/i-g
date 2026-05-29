@@ -49,14 +49,15 @@ docker run --rm \
     echo "[container] pnpm: $(pnpm -v)"
 
     # store cục bộ trong container để tránh đụng store host (đã từng gây
-    # ERR_PNPM_UNEXPECTED_STORE). Dùng node_modules sạch.
+    # ERR_PNPM_UNEXPECTED_STORE). Dùng env var thay vì `pnpm config set` để
+    # KHÔNG ghi rác store-dir vào .npmrc. Dùng node_modules sạch.
     rm -rf node_modules
-    pnpm config set store-dir /src/.pnpm-store --location project
+    export PNPM_STORE_PATH=/src/.pnpm-store
 
     echo "[container] cài full deps (gồm dev để build nest + prisma CLI)"
     # Lưu ý: nếu vừa bump version trong package.json (vd prisma 6->7) thì
     # lockfile sẽ lệch -> không dùng --frozen-lockfile, để pnpm cập nhật lại.
-    pnpm install
+    pnpm install --store-dir "$PNPM_STORE_PATH"
 
     echo "[container] prisma generate"
     pnpm prisma generate
