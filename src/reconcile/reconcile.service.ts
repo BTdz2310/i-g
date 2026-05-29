@@ -13,15 +13,35 @@ export class ReconcileService {
     private readonly pvi: PviClient,
   ) {}
 
-  @Cron('* * * * *') // runs every minute; actual gate inside
-  async reconcile() {
-    // Trong pm2 cluster, cron chạy trên MỌI instance -> đối soát trùng (gọi
-    // PVI nhiều lần, reconcileAttempts tăng sai). Chỉ cho instance 0 chạy.
-    // NODE_APP_INSTANCE do pm2 cluster gán (0,1,2..); undefined khi chạy đơn lẻ.
-    const appInstance = process.env.NODE_APP_INSTANCE;
-    if (appInstance !== undefined && appInstance !== '0') return;
+  // Khoá toàn cục cho cron reconcile. Cron chạy trên MỌI pm2 instance của
+  // MỌI BE server -> phải đảm bảo chỉ 1 cái thực sự chạy mỗi phút, nếu không
+  // sẽ gọi PVI getPolicy trùng + reconcileAttempts tăng sai.
+  private static readonly RECONCILE_LOCK_KEY = 987654321;
 
+  @Cron('* * * * *') // runs every minute; global advisory lock gates inside
+  async reconcile() {
     const env = getEnv();
+
+    // Giành Postgres advisory lock toàn cục (session-level). Trả false ngay
+    // nếu instance/máy khác đang giữ -> bỏ qua, không chờ. Lock ở tầng DB nên
+    // đúng cho cả pm2 cluster lẫn nhiều BE server. KHÔNG bọc cả vòng reconcile
+    // trong $transaction vì reconcile gọi PVI getPolicy (chậm) -> sẽ vượt
+    // transaction timeout của Prisma. Thay vào đó giữ session lock qua suốt
+    // vòng chạy rồi nhả ở finally.
+    const lockRows = await this.prisma.$queryRaw<{ locked: boolean }[]>`
+      SELECT pg_try_advisory_lock(${ReconcileService.RECONCILE_LOCK_KEY}) AS locked
+    `;
+    if (!lockRows[0]?.locked) return;
+
+    try {
+      await this.runReconcile(env);
+    } finally {
+      await this.prisma
+        .$queryRaw`SELECT pg_advisory_unlock(${ReconcileService.RECONCILE_LOCK_KEY})`;
+    }
+  }
+
+  private async runReconcile(env: ReturnType<typeof getEnv>) {
     const graceCutoff = new Date(Date.now() - env.RECONCILE_GRACE_MIN * 60_000);
 
     const pending = await this.prisma.transaction.findMany({
