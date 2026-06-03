@@ -10,6 +10,7 @@ import { PviClient } from '../pvi/pvi.client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderInput } from '../pvi/dto/create-order.dto';
 import { CreateOrderDto, CreateOrderResultDto } from './dto/create-order.dto';
+import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PartnerAuthGuard } from '../partner-auth/partner-auth.guard';
 import { RawBodyRequest } from '../common/types/raw-body';
@@ -41,17 +42,45 @@ export class OrderController {
     const maGiaodich = randomUUID();
     const productKind = body.productKind ?? 'AUTO';
     const partnerId = (req as any).partner?.id as string | undefined;
+    const idempotencyKey = body.idempotencyKey;
 
-    const tx = await this.prisma.transaction.create({
-      data: {
-        maGiaodich,
-        productKind,
-        status: 'SUBMITTING',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        inboundPayload: JSON.parse(JSON.stringify(body)),
-        ...(partnerId ? { partnerId } : {}),
-      },
-    });
+    // Idempotent: cùng (partner, key) đã submit → trả lại đúng đơn cũ, không gọi PVI lần nữa.
+    // partnerId luôn có sau PartnerAuthGuard; guard chỉ phòng trường hợp route đổi cấu hình.
+    if (partnerId && idempotencyKey) {
+      const existing = await this.prisma.transaction.findUnique({
+        where: { partnerId_idempotencyKey: { partnerId, idempotencyKey } },
+      });
+      if (existing) return this.toResult(existing);
+    }
+
+    let tx: Awaited<ReturnType<typeof this.prisma.transaction.create>>;
+    try {
+      tx = await this.prisma.transaction.create({
+        data: {
+          maGiaodich,
+          productKind,
+          status: 'SUBMITTING',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          inboundPayload: JSON.parse(JSON.stringify(body)),
+          ...(partnerId ? { partnerId } : {}),
+          idempotencyKey,
+        },
+      });
+    } catch (err) {
+      // Race: request song song cùng (partner, key) đã thắng — trả về đơn của nó.
+      if (
+        partnerId &&
+        idempotencyKey &&
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        const winner = await this.prisma.transaction.findUnique({
+          where: { partnerId_idempotencyKey: { partnerId, idempotencyKey } },
+        });
+        if (winner) return this.toResult(winner);
+      }
+      throw err;
+    }
 
     try {
       const input: CreateOrderInput = {
@@ -130,5 +159,21 @@ export class OrderController {
       });
       throw err;
     }
+  }
+
+  /** Map một transaction đã lưu về shape kết quả tạo đơn (dùng cho replay idempotent). */
+  private toResult(tx: {
+    maGiaodich: string;
+    pviPrKey: string | null;
+    paymentUrl: string | null;
+    serialNumber: string | null;
+  }): CreateOrderResultDto {
+    const prKey = tx.pviPrKey != null ? Number(tx.pviPrKey) : null;
+    return {
+      maGiaodich: tx.maGiaodich,
+      Pr_key: prKey != null && Number.isFinite(prKey) ? prKey : null,
+      paymentUrl: tx.paymentUrl,
+      serialNumber: tx.serialNumber,
+    };
   }
 }

@@ -26,6 +26,9 @@ import { PdfStorageService } from '../storage/pdf-storage.service';
 @Throttle({ default: { limit: 30, ttl: 60_000 } })
 @Controller('api/pvi/order')
 export class PolicyController {
+  private readonly pdfProxyEnabled =
+    (process.env['PDF_PROXY_ENABLED'] ?? 'true') !== 'false';
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly pvi: PviClient,
@@ -90,7 +93,11 @@ export class PolicyController {
         paymentUrl: tx.paymentUrl,
         policyNumber: tx.policyNumber,
         serialNumber: tx.serialNumber,
-        pdfUrl: tx.pdfUrl ? this.pdfStorage.publicUrl(maGiaodich) : null,
+        pdfUrl: tx.pdfUrl
+          ? this.pdfProxyEnabled
+            ? this.pdfStorage.publicUrl(maGiaodich)
+            : tx.pdfUrl
+          : null,
       };
     }
 
@@ -125,7 +132,11 @@ export class PolicyController {
           paymentUrl: tx.paymentUrl,
           policyNumber: result.PolicyNumber,
           serialNumber: result.SerialNumber,
-          pdfUrl: result.URL ? this.pdfStorage.publicUrl(maGiaodich) : null,
+          pdfUrl: result.URL
+            ? this.pdfProxyEnabled
+              ? this.pdfStorage.publicUrl(maGiaodich)
+              : result.URL
+            : null,
         };
       }
     } catch {

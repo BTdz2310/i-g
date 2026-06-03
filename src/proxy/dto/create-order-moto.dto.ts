@@ -6,9 +6,11 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { StartNotInPastCombined } from './start-not-in-past.validator';
 
 export class CreateOrderMotoDto {
   @ApiProperty({ example: 'NGUYEN VAN A' })
@@ -23,6 +25,7 @@ export class CreateOrderMotoDto {
 
   @ApiProperty({ example: '25/05/2026 00:00' })
   @Matches(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
+  @StartNotInPastCombined()
   ngay_dau!: string;
 
   @ApiProperty({ example: '25/05/2027 00:00' })
@@ -108,11 +111,30 @@ export class CreateOrderMotoDto {
   @IsOptional()
   @IsBoolean()
   an_bien_ks?: boolean;
+
+  @ApiProperty({
+    description:
+      'Khóa idempotent do đối tác sinh, duy nhất cho mỗi lần khách mua (BẮT BUỘC). ' +
+      'Gửi lại cùng key (vd khi retry/timeout) sẽ trả về đúng đơn cũ thay vì tạo đơn mới. ' +
+      'Thiếu key → 400.',
+    example: 'moto-2026-06-03-abc123',
+    maxLength: 128,
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  idempotencyKey!: string;
 }
 
 export class CreateOrderMotoResultDto {
   @ApiProperty() maGiaodich!: string;
-  @ApiProperty({ example: 136452 }) Pr_key!: number;
+  @ApiProperty({
+    description:
+      'PVI internal key. null khi replay idempotent một đơn chưa kịp submit sang PVI.',
+    example: 136452,
+    nullable: true,
+  })
+  Pr_key!: number | null;
   @ApiProperty({ example: null, nullable: true }) paymentUrl!: string | null;
   @ApiProperty({ example: null, nullable: true }) serialNumber!: string | null;
 }

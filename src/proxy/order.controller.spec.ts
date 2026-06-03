@@ -1,4 +1,5 @@
 import { OrderController } from './order.controller';
+import { Prisma } from '@prisma/client';
 
 const BASE_BODY: any = {
   TenKH: 'Nguyen Van A',
@@ -25,10 +26,12 @@ const BASE_BODY: any = {
   SoMay: 'MY001',
   TongPhi: '500000',
   MaMucDichSD: 'M01',
+  idempotencyKey: 'idem-base',
 };
 
 const makePrisma = () => ({
   transaction: {
+    findUnique: jest.fn().mockResolvedValue(null),
     create: jest.fn().mockResolvedValue({ id: 'tx-uuid' }),
     update: jest.fn().mockResolvedValue({}),
   },
@@ -95,5 +98,74 @@ describe('OrderController', () => {
     expect(prisma.transaction.create.mock.calls[0][0].data.productKind).toBe(
       'AUTO',
     );
+  });
+
+  describe('idempotency', () => {
+    const req: any = { partner: { id: 'partner-1' } };
+    const body = { ...BASE_BODY, idempotencyKey: 'key-123' };
+
+    it('replays existing order without calling PVI when key already used', async () => {
+      prisma.transaction.findUnique.mockResolvedValue({
+        maGiaodich: 'old-uuid',
+        pviPrKey: '777',
+        paymentUrl: 'https://pay.pvi.com/old',
+        serialNumber: 'SN-OLD',
+      });
+
+      const result = await ctrl.createOrder(req, body);
+
+      expect(prisma.transaction.findUnique).toHaveBeenCalledWith({
+        where: {
+          partnerId_idempotencyKey: {
+            partnerId: 'partner-1',
+            idempotencyKey: 'key-123',
+          },
+        },
+      });
+      expect(result).toEqual({
+        maGiaodich: 'old-uuid',
+        Pr_key: 777,
+        paymentUrl: 'https://pay.pvi.com/old',
+        serialNumber: 'SN-OLD',
+      });
+      // Quan trọng: KHÔNG tạo đơn mới, KHÔNG gọi PVI → khách không nhận GCN trùng.
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+      expect(mockPvi.createOrder).not.toHaveBeenCalled();
+    });
+
+    it('creates a new order when key is unused', async () => {
+      prisma.transaction.findUnique.mockResolvedValue(null);
+      mockPvi.createOrder.mockResolvedValue({ Pr_key: 1 });
+
+      await ctrl.createOrder(req, body);
+
+      expect(mockPvi.createOrder).toHaveBeenCalledTimes(1);
+      expect(prisma.transaction.create.mock.calls[0][0].data.idempotencyKey).toBe(
+        'key-123',
+      );
+    });
+
+    it('returns the winning order when a concurrent insert hits the unique constraint', async () => {
+      prisma.transaction.findUnique
+        .mockResolvedValueOnce(null) // initial lookup: chưa thấy
+        .mockResolvedValueOnce({
+          maGiaodich: 'winner-uuid',
+          pviPrKey: '888',
+          paymentUrl: null,
+          serialNumber: null,
+        });
+      prisma.transaction.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+
+      const result = await ctrl.createOrder(req, body);
+
+      expect(result.maGiaodich).toBe('winner-uuid');
+      expect(result.Pr_key).toBe(888);
+      expect(mockPvi.createOrder).not.toHaveBeenCalled();
+    });
   });
 });

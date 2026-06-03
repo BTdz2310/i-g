@@ -7,7 +7,9 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
 } from 'class-validator';
+import { StartNotInPast } from './start-not-in-past.validator';
 
 export class CreateOrderDto {
   @ApiProperty({
@@ -72,6 +74,7 @@ export class CreateOrderDto {
 
   @ApiProperty({ description: 'Giờ bắt đầu BH', example: '00:00' })
   @Matches(/^\d{2}:\d{2}$/, { message: 'GioDau phải có dạng HH:mm' })
+  @StartNotInPast()
   GioDau!: string;
 
   @ApiProperty({ description: 'Giờ kết thúc BH', example: '23:59' })
@@ -262,12 +265,30 @@ export class CreateOrderDto {
   @IsOptional()
   @IsIn(['AUTO', 'MOTO'])
   productKind?: string;
+
+  @ApiProperty({
+    description:
+      'Khóa idempotent do đối tác sinh, duy nhất cho mỗi lần khách mua (BẮT BUỘC). ' +
+      'Gửi lại cùng key (vd khi retry/timeout) sẽ trả về đúng đơn cũ thay vì tạo đơn mới. ' +
+      'Thiếu key → 400.',
+    example: 'order-2026-06-03-abc123',
+    maxLength: 128,
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  idempotencyKey!: string;
 }
 
 export class CreateOrderResultDto {
   @ApiProperty({ example: 'a1b2c3d4-...' }) maGiaodich!: string;
-  @ApiProperty({ description: 'PVI internal key', example: 123456 })
-  Pr_key!: number;
+  @ApiProperty({
+    description:
+      'PVI internal key. null khi replay idempotent một đơn chưa kịp submit sang PVI.',
+    example: 123456,
+    nullable: true,
+  })
+  Pr_key!: number | null;
   @ApiProperty({
     description:
       'URL thanh toán PVI — redirect user đến đây để thanh toán. null nếu PVI chưa trả.',

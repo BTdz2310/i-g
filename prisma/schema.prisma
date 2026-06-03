@@ -32,6 +32,9 @@ model Transaction {
   partnerId         String?
   partner           Partner?  @relation(fields: [partnerId], references: [id])
 
+  idempotencyKey    String?
+
+  @@unique([partnerId, idempotencyKey])
   @@index([status, createdAt])
   @@index([policyNumber])
   @@index([partnerId])
