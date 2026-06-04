@@ -13,6 +13,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   StartNotInPastCombined,
   resolveNgayDauCombined,
+  shiftEndTime,
 } from './start-not-in-past.validator';
 
 export class CreateOrderMotoDto {
@@ -27,9 +28,21 @@ export class CreateOrderMotoDto {
   diachi_nguoimua_bh!: string;
 
   @ApiProperty({ example: '25/05/2026 00:00' })
-  @Transform(({ value }) =>
-    typeof value === 'string' ? resolveNgayDauCombined(value) : value,
-  )
+  @Transform(({ value, obj }) => {
+    if (typeof value !== 'string') return value;
+    const resolved = resolveNgayDauCombined(value);
+    // Chỉ dịch ngay_cuoi khi thực sự round-up (ngày hôm nay + 00:00)
+    const origGio = value.slice(11); // "HH:mm" từ chuỗi gốc
+    const resolvedGio = resolved.slice(11);
+    if (resolvedGio !== origGio && resolvedGio !== 'past' && typeof obj?.ngay_cuoi === 'string') {
+      const cuoiM = /^(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})$/.exec(obj.ngay_cuoi as string);
+      if (cuoiM) {
+        const shifted = shiftEndTime(cuoiM[1], cuoiM[2], resolvedGio);
+        obj.ngay_cuoi = `${shifted.ngayCuoi} ${shifted.gioCuoi}`;
+      }
+    }
+    return resolved;
+  })
   @Matches(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
   @StartNotInPastCombined()
   ngay_dau!: string;

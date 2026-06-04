@@ -18,6 +18,25 @@ const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
  * - Ngày tương lai → giữ nguyên "00:00"
  * Nếu GioDau != "00:00" → không can thiệp, trả lại nguyên xi.
  */
+function formatVnDate(utcMs: number): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  const d = new Date(utcMs + VN_OFFSET_MS);
+  return `${p(d.getUTCDate())}/${p(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
+}
+
+function formatVnTime(utcMs: number): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  const d = new Date(utcMs + VN_OFFSET_MS);
+  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+}
+
+/**
+ * Chỉ áp dụng khi đối tác truyền GioDau = "00:00" (không chỉnh được giờ):
+ * - Ngày quá khứ → trả sentinel 'past' (validator bắt)
+ * - Ngày tương lai → không can thiệp
+ * - Ngày hôm nay + 00:00 → round-up GioDau lên đầu giờ tiếp theo,
+ *   đồng thời dịch GioCuoi/NgayCuoi cùng một delta để giữ đúng thời hạn BH.
+ */
 export function resolveGioDau(ngay: string, gio: string): string {
   if (gio !== '00:00') return gio;
 
@@ -25,17 +44,37 @@ export function resolveGioDau(ngay: string, gio: string): string {
   if (parsed === null) return gio; // format lỗi — nhường @Matches bắt
 
   const nowMs = Date.now();
-  // Đầu ngày hôm nay theo giờ VN (quy về UTC)
   const startOfTodayVn =
     Math.floor((nowMs + VN_OFFSET_MS) / 86_400_000) * 86_400_000 - VN_OFFSET_MS;
 
-  if (parsed < startOfTodayVn) return 'past'; // sentinel: validator sẽ reject
-  if (parsed >= startOfTodayVn + 86_400_000) return '00:00'; // tương lai
+  if (parsed < startOfTodayVn) return 'past';
+  if (parsed >= startOfTodayVn + 86_400_000) return '00:00';
 
-  // Ngày hôm nay + 00:00: round-up lên đầu giờ tiếp theo theo giờ VN
   const nextHourUtcMs = Math.ceil((nowMs + 1) / 3_600_000) * 3_600_000;
   const vnH = new Date(nextHourUtcMs + VN_OFFSET_MS).getUTCHours();
   return String(vnH).padStart(2, '0') + ':00';
+}
+
+/**
+ * Dịch GioCuoi + NgayCuoi theo cùng delta giờ đã round-up GioDau.
+ * Chỉ gọi khi đang trong case ngày hôm nay + GioDau=00:00.
+ */
+export function shiftEndTime(
+  ngayCuoi: string,
+  gioCuoi: string,
+  resolvedGioDau: string,
+): { ngayCuoi: string; gioCuoi: string } {
+  const cuoiMs = parseVnDateTime(ngayCuoi, gioCuoi);
+  if (cuoiMs === null) return { ngayCuoi, gioCuoi }; // format lỗi — giữ nguyên
+
+  const [rH, rM] = resolvedGioDau.split(':').map(Number);
+  const deltaMs = (rH * 60 + rM) * 60_000; // delta so với 00:00
+
+  const shiftedMs = cuoiMs + deltaMs;
+  return {
+    ngayCuoi: formatVnDate(shiftedMs),
+    gioCuoi: formatVnTime(shiftedMs),
+  };
 }
 
 /**
