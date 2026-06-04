@@ -12,6 +12,44 @@ import {
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 
 /**
+ * Chỉ áp dụng khi đối tác truyền GioDau = "00:00" (không chỉnh được giờ):
+ * - Ngày quá khứ (theo giờ VN) → trả null (DTO transform set lại "past", validator bắt)
+ * - Ngày hôm nay → round-up lên đầu giờ tiếp theo theo giờ VN
+ * - Ngày tương lai → giữ nguyên "00:00"
+ * Nếu GioDau != "00:00" → không can thiệp, trả lại nguyên xi.
+ */
+export function resolveGioDau(ngay: string, gio: string): string {
+  if (gio !== '00:00') return gio;
+
+  const parsed = parseVnDateTime(ngay, '00:00');
+  if (parsed === null) return gio; // format lỗi — nhường @Matches bắt
+
+  const nowMs = Date.now();
+  // Đầu ngày hôm nay theo giờ VN (quy về UTC)
+  const startOfTodayVn =
+    Math.floor((nowMs + VN_OFFSET_MS) / 86_400_000) * 86_400_000 - VN_OFFSET_MS;
+
+  if (parsed < startOfTodayVn) return 'past'; // sentinel: validator sẽ reject
+  if (parsed >= startOfTodayVn + 86_400_000) return '00:00'; // tương lai
+
+  // Ngày hôm nay + 00:00: round-up lên đầu giờ tiếp theo theo giờ VN
+  const nextHourUtcMs = Math.ceil((nowMs + 1) / 3_600_000) * 3_600_000;
+  const vnH = new Date(nextHourUtcMs + VN_OFFSET_MS).getUTCHours();
+  return String(vnH).padStart(2, '0') + ':00';
+}
+
+/**
+ * Variant cho ngay_dau gộp "dd/MM/yyyy HH:mm" (đơn xe máy).
+ * Chỉ can thiệp khi phần giờ là "00:00".
+ */
+export function resolveNgayDauCombined(value: string): string {
+  const m = /^(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})$/.exec(value);
+  if (!m) return value; // format lỗi — nhường @Matches bắt
+  const resolved = resolveGioDau(m[1], m[2]);
+  return `${m[1]} ${resolved}`;
+}
+
+/**
  * Parse "dd/MM/yyyy" + "HH:mm" thành mốc thời gian UTC, coi input là giờ VN.
  * Trả về null nếu sai định dạng hoặc ngày/giờ không hợp lệ (vd 32/13, 25:99).
  */

@@ -9,7 +9,8 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { StartNotInPast } from './start-not-in-past.validator';
+import { Transform } from 'class-transformer';
+import { StartNotInPast, resolveGioDau } from './start-not-in-past.validator';
 
 export class CreateOrderDto {
   @ApiProperty({
@@ -73,6 +74,11 @@ export class CreateOrderDto {
   NgayCuoi!: string;
 
   @ApiProperty({ description: 'Giờ bắt đầu BH', example: '00:00' })
+  @Transform(({ value, obj }) =>
+    typeof value === 'string' && typeof obj?.NgayDau === 'string'
+      ? resolveGioDau(obj.NgayDau as string, value)
+      : value,
+  )
   @Matches(/^\d{2}:\d{2}$/, { message: 'GioDau phải có dạng HH:mm' })
   @StartNotInPast()
   GioDau!: string;

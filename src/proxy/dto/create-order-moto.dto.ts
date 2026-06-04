@@ -9,8 +9,11 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { StartNotInPastCombined } from './start-not-in-past.validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  StartNotInPastCombined,
+  resolveNgayDauCombined,
+} from './start-not-in-past.validator';
 
 export class CreateOrderMotoDto {
   @ApiProperty({ example: 'NGUYEN VAN A' })
@@ -24,6 +27,9 @@ export class CreateOrderMotoDto {
   diachi_nguoimua_bh!: string;
 
   @ApiProperty({ example: '25/05/2026 00:00' })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? resolveNgayDauCombined(value) : value,
+  )
   @Matches(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
   @StartNotInPastCombined()
   ngay_dau!: string;

@@ -1,6 +1,8 @@
 import {
   StartNotInPastConstraint,
   parseVnDateTime,
+  resolveGioDau,
+  resolveNgayDauCombined,
 } from './start-not-in-past.validator';
 
 const c = new StartNotInPastConstraint();
@@ -35,6 +37,65 @@ describe('parseVnDateTime', () => {
     expect(parseVnDateTime('01/13/2026', '00:00')).toBeNull();
     expect(parseVnDateTime('31/02/2026', '00:00')).toBeNull();
     expect(parseVnDateTime('01/06/2026', '25:00')).toBeNull();
+  });
+});
+
+describe('resolveGioDau', () => {
+  it('giữ nguyên nếu gio != 00:00', () => {
+    const future = fmt(Date.now() + 24 * 60 * 60 * 1000);
+    expect(resolveGioDau(future.ngay, '14:30')).toBe('14:30');
+  });
+
+  it('trả "past" nếu ngày quá khứ + 00:00', () => {
+    const yesterday = fmt(Date.now() - 24 * 60 * 60 * 1000);
+    expect(resolveGioDau(yesterday.ngay, '00:00')).toBe('past');
+  });
+
+  it('trả "00:00" nếu ngày tương lai + 00:00', () => {
+    const future = fmt(Date.now() + 48 * 60 * 60 * 1000);
+    expect(resolveGioDau(future.ngay, '00:00')).toBe('00:00');
+  });
+
+  it('round-up lên giờ tiếp theo nếu ngày hôm nay + 00:00', () => {
+    const todayVn = fmt(
+      Math.floor((Date.now() + 7 * 60 * 60 * 1000) / 86_400_000) *
+        86_400_000 -
+        7 * 60 * 60 * 1000,
+    );
+    const result = resolveGioDau(todayVn.ngay, '00:00');
+    expect(result).toMatch(/^\d{2}:00$/);
+    expect(result).not.toBe('past');
+  });
+
+  it('trả lại nguyên xi nếu format ngày lỗi', () => {
+    expect(resolveGioDau('2026-06-01', '00:00')).toBe('00:00');
+  });
+});
+
+describe('resolveNgayDauCombined', () => {
+  it('trả lại nguyên xi nếu format lỗi', () => {
+    expect(resolveNgayDauCombined('invalid')).toBe('invalid');
+  });
+
+  it('trả "dd/MM/yyyy past" nếu ngày quá khứ', () => {
+    const yesterday = fmt(Date.now() - 24 * 60 * 60 * 1000);
+    expect(resolveNgayDauCombined(`${yesterday.ngay} 00:00`)).toBe(
+      `${yesterday.ngay} past`,
+    );
+  });
+
+  it('giữ nguyên 00:00 nếu ngày tương lai', () => {
+    const future = fmt(Date.now() + 48 * 60 * 60 * 1000);
+    expect(resolveNgayDauCombined(`${future.ngay} 00:00`)).toBe(
+      `${future.ngay} 00:00`,
+    );
+  });
+
+  it('không can thiệp nếu giờ != 00:00', () => {
+    const future = fmt(Date.now() + 48 * 60 * 60 * 1000);
+    expect(resolveNgayDauCombined(`${future.ngay} 14:30`)).toBe(
+      `${future.ngay} 14:30`,
+    );
   });
 });
 
