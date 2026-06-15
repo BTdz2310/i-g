@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiReferenceOptions } from '@scalar/nestjs-api-reference';
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { validateEnv } from './config/env';
@@ -18,7 +19,11 @@ async function bootstrap() {
 
   // Tin tưởng X-Forwarded-* từ reverse proxy (Nginx/ALB) đứng trước app.
   // Cần thiết để req.ip trả IP thật của client cho IP allowlist của partner.
-  app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+  app.set('trust proxy', true);
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  app.use(cookieParser());
 
   // Security headers: HSTS, X-Frame-Options, X-Content-Type-Options, CSP.
   // CSP enforced in all environments to prevent XSS attacks.

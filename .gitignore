@@ -59,3 +59,7 @@ logs/
 
 # Cached PDF GCN từ PVI (lazy fetch — không cần commit)
 /storage
+
+# CMS frontend build artifacts
+cms/dist
+cms/node_modules

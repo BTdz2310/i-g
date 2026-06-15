@@ -38,6 +38,7 @@ model Transaction {
   @@index([status, createdAt])
   @@index([policyNumber])
   @@index([partnerId])
+  @@index([createdAt, id])
 }
 
 enum TxStatus {
@@ -62,6 +63,7 @@ model ApiCallLog {
 
   @@index([maGiaodich])
   @@index([createdAt])
+  @@index([direction, createdAt])
 }
 
 model Partner {
@@ -102,8 +104,27 @@ enum SecretStatus {
 }
 
 model Admin {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id             String               @id @default(uuid())
+  username       String               @unique
+  passwordHash   String
+  createdAt      DateTime             @default(now())
+  refreshTokens  AdminRefreshToken[]
+}
+
+model AdminRefreshToken {
+  id           String    @id @default(uuid())
+  adminId      String
+  admin        Admin     @relation(fields: [adminId], references: [id])
+  tokenHash    String    @unique
+  familyId     String
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @unique
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([familyId])
+  @@index([expiresAt])
 }
