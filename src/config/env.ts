@@ -34,7 +34,10 @@ const envSchema = z.object({
   ADMIN_ACCESS_TOKEN_TTL: z.string().default('15m'),
   ADMIN_REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(7),
   ADMIN_REFRESH_SECRET: z.string().min(32),
-  ADMIN_COOKIE_SECURE: z.coerce.boolean().default(true),
+  ADMIN_COOKIE_SECURE: z
+    .string()
+    .default('true')
+    .transform((v) => v.trim().toLowerCase() === 'true'),
   ADMIN_COOKIE_DOMAIN: z.string().optional(),
   ADMIN_CSRF_SECRET: z.string().min(16),
   ADMIN_USERNAME: z.string().min(1).optional(),
